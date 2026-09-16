@@ -9,7 +9,7 @@
 | 05 Storage | DONE | PROGRESS.md#phase-05 | 30ac3fa |
 | 06 API | DONE | PROGRESS.md#phase-06 | pending |
 | 07 Frontend Login | DONE | PROGRESS.md#phase-07 | pending |
-| 08 Frontend Chat | NOT_STARTED | — | — |
+| 08 Frontend Chat | DONE | PROGRESS.md#phase-08 | pending |
 | 09 Frontend Docs | NOT_STARTED | — | — |
 | 10 Frontend History | NOT_STARTED | — | — |
 | 11 Tests | NOT_STARTED | — | — |
