@@ -1,11 +1,35 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
 from app.config import settings
+from app.exceptions import AppError
 from app.logging import configure_logging, get_logger
+from app.storage import init_db
+
+from app.api.auth import router as auth_router
+from app.api.documents import router as documents_router
+from app.api.query import router as query_router
+from app.api.chats import router as chats_router
 
 configure_logging(settings.log_level)
 logger = get_logger(__name__)
 
 app = FastAPI(title="RAG Chatbot", version="0.1.0")
+
+app.include_router(auth_router)
+app.include_router(documents_router)
+app.include_router(query_router)
+app.include_router(chats_router)
+
+
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    return JSONResponse(status_code=exc.status_code, content=exc.to_dict())
+
+
+@app.on_event("startup")
+async def startup():
+    init_db(settings.sqlite_path)
 
 
 @app.get("/api/v1/health")

@@ -141,3 +141,22 @@ Files created:
 
 Test results: 49 passed, 0 failed (full suite)
 Phase 05 tests: 12 passed, 0 failed
+
+## Phase 06 — API — DONE
+
+Agent activated: api-platform-engineer
+Date: 2026-09-17
+
+Files created:
+- backend/app/api/__init__.py
+- backend/app/api/auth.py
+- backend/app/api/documents.py
+- backend/app/api/query.py
+- backend/app/api/chats.py
+- backend/app/main.py (updated with routers)
+- backend/tests/api/test_auth.py
+- backend/tests/api/test_documents.py
+- backend/tests/api/test_query.py
+- backend/tests/api/test_chats.py
+
+Test results: 61 passed, 0 failed (full suite)

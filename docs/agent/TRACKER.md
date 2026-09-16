@@ -6,8 +6,8 @@
 | 02 Ingestion | DONE | PROGRESS.md#phase-02 | caa86a8 |
 | 03 Retrieval | DONE | PROGRESS.md#phase-03 | ae6314b |
 | 04 Generation | DONE | PROGRESS.md#phase-04 | df3eeb4 |
-| 05 Storage | DONE | PROGRESS.md#phase-05 | pending |
-| 06 API | NOT_STARTED | — | — |
+| 05 Storage | DONE | PROGRESS.md#phase-05 | 30ac3fa |
+| 06 API | DONE | PROGRESS.md#phase-06 | pending |
 | 07 Frontend Login | NOT_STARTED | — | — |
 | 08 Frontend Chat | NOT_STARTED | — | — |
 | 09 Frontend Docs | NOT_STARTED | — | — |
