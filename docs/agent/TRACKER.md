@@ -12,7 +12,7 @@
 | 08 Frontend Chat | DONE | PROGRESS.md#phase-08 | pending |
 | 09 Frontend Docs | DONE | PROGRESS.md#phase-09 | pending |
 | 10 Frontend History | DONE | PROGRESS.md#phase-10 | pending |
-| 11 Tests | NOT_STARTED | — | — |
+| 11 Tests | DONE | PROGRESS.md#phase-11 | pending |
 | 12 Polish | NOT_STARTED | — | — |
 
 Status values: `NOT_STARTED`, `IN_PROGRESS`, `DONE`, `BLOCKED`

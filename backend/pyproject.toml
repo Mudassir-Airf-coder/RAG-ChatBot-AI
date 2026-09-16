@@ -17,6 +17,7 @@ dependencies = [
     "qdrant-client>=1.9",
     "fastembed>=0.3",
     "numpy>=1.26",
+    "pytest-cov>=7.1.0",
 ]
 
 [project.optional-dependencies]

@@ -208,3 +208,13 @@ Files modified:
 - backend/static/style.css (added active chat style)
 
 Test results: 61 passed, 0 failed (full suite)
+
+## Phase 11 — Tests — DONE
+
+Agent activated: testing-specialist
+Date: 2026-09-17
+
+Actions:
+- Added pytest-cov dependency
+- Coverage report: 89% (above 80% threshold)
+- All 61 tests pass
