@@ -27,10 +27,6 @@ function generateId() {
     return 'chat_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
-function generateMsgId() {
-    return 'msg_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
 async function apiCall(url, method = 'GET', body = null) {
     const opts = { method, headers: {} };
     if (body) {
@@ -40,6 +36,12 @@ async function apiCall(url, method = 'GET', body = null) {
     const resp = await fetch(url, opts);
     if (resp.status === 204) return null;
     return resp.json();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function renderUserMessage(text) {
@@ -75,12 +77,6 @@ function renderAssistantMessage(answer, citations) {
     });
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 async function openSourceModal(documentId, chunkId) {
     try {
         const chunk = await apiCall(`/api/v1/documents/${documentId}/chunks/${chunkId}`);
@@ -113,8 +109,8 @@ async function sendMessage() {
         let chatId = currentChatId;
         if (!chatId) {
             chatId = generateId();
-            await apiCall('/api/v1/chats', 'POST', { title: text.slice(0, 50) });
             currentChatId = chatId;
+            await apiCall('/api/v1/chats', 'POST', { title: text.slice(0, 50) });
         }
 
         const result = await apiCall('/api/v1/query', 'POST', {
@@ -126,6 +122,95 @@ async function sendMessage() {
         });
 
         renderAssistantMessage(result.answer, result.citations);
+        loadChatHistory();
+    } catch (err) {
+        renderAssistantMessage('Error: ' + err.message, []);
+    }
+}
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+messageInput.addEventListener('input', () => {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = messageInput.scrollHeight + 'px';
+});
+
+newChatBtn.addEventListener('click', () => {
+    currentChatId = null;
+    chatMessages.innerHTML = '<div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your documents</p></div>';
+});
+
+toggleSidebarBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+});
+
+// Chat history
+async function loadChatHistory() {
+    try {
+        const data = await apiCall('/api/v1/chats');
+        chatHistory.innerHTML = '';
+        (data.chats || []).forEach(chat => {
+            const div = document.createElement('div');
+            div.className = 'chat-item';
+            div.dataset.id = chat.id;
+            div.innerHTML = `
+                <span class="chat-title">${escapeHtml(chat.title)}</span>
+                <button class="icon-btn chat-delete">✕</button>
+            `;
+            div.querySelector('.chat-title').addEventListener('click', () => loadChat(chat.id));
+            div.querySelector('.chat-delete').addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteChat(chat.id, div);
+            });
+            if (chat.id === currentChatId) div.classList.add('active');
+            chatHistory.appendChild(div);
+        });
+    } catch (err) {
+        console.error('Failed to load chats:', err);
+    }
+}
+
+async function loadChat(chatId) {
+    currentChatId = chatId;
+    chatMessages.innerHTML = '';
+
+    document.querySelectorAll('.chat-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.id === chatId);
+    });
+
+    try {
+        const data = await apiCall(`/api/v1/chats/${chatId}/messages`);
+        (data.messages || []).forEach(msg => {
+            if (msg.role === 'user') {
+                renderUserMessage(msg.content);
+            } else {
+                renderAssistantMessage(msg.content, msg.citations);
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load messages:', err);
+    }
+}
+
+async function deleteChat(chatId, item) {
+    try {
+        await apiCall(`/api/v1/chats/${chatId}`, 'DELETE');
+        if (currentChatId === chatId) {
+            currentChatId = null;
+            chatMessages.innerHTML = '<div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your documents</p></div>';
+        }
+        loadChatHistory();
+    } catch (err) {
+        console.error('Failed to delete chat:', err);
+    }
+}
+
 loadChatHistory();
 
 // Document upload
@@ -200,65 +285,3 @@ async function loadDocuments() {
 }
 
 loadDocuments();
-    } catch (err) {
-        renderAssistantMessage('Error: ' + err.message, []);
-    }
-}
-
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-messageInput.addEventListener('input', () => {
-    messageInput.style.height = 'auto';
-    messageInput.style.height = messageInput.scrollHeight + 'px';
-});
-
-newChatBtn.addEventListener('click', () => {
-    currentChatId = null;
-    chatMessages.innerHTML = '<div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your documents</p></div>';
-});
-
-toggleSidebarBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-});
-
-async function loadChatHistory() {
-    try {
-        const data = await apiCall('/api/v1/chats');
-        chatHistory.innerHTML = '';
-        (data.chats || []).forEach(chat => {
-            const div = document.createElement('div');
-            div.className = 'chat-item';
-            div.textContent = chat.title;
-            div.addEventListener('click', () => loadChat(chat.id));
-            chatHistory.appendChild(div);
-        });
-    } catch (err) {
-        console.error('Failed to load chats:', err);
-    }
-}
-
-async function loadChat(chatId) {
-    currentChatId = chatId;
-    chatMessages.innerHTML = '';
-
-    try {
-        const data = await apiCall(`/api/v1/chats/${chatId}/messages`);
-        (data.messages || []).forEach(msg => {
-            if (msg.role === 'user') {
-                renderUserMessage(msg.content);
-            } else {
-                renderAssistantMessage(msg.content, msg.citations);
-            }
-        });
-    } catch (err) {
-        console.error('Failed to load messages:', err);
-    }
-}
-
-loadChatHistory();

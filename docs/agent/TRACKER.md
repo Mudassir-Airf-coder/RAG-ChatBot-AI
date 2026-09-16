@@ -11,7 +11,7 @@
 | 07 Frontend Login | DONE | PROGRESS.md#phase-07 | pending |
 | 08 Frontend Chat | DONE | PROGRESS.md#phase-08 | pending |
 | 09 Frontend Docs | DONE | PROGRESS.md#phase-09 | pending |
-| 10 Frontend History | NOT_STARTED | — | — |
+| 10 Frontend History | DONE | PROGRESS.md#phase-10 | pending |
 | 11 Tests | NOT_STARTED | — | — |
 | 12 Polish | NOT_STARTED | — | — |
 
