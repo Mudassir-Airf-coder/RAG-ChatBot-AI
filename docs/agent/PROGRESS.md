@@ -79,3 +79,22 @@ Definition of Done:
 Agent activated: engineering-backend-architect
 - Verified: 10 tests pass, health check returns {"status":"ok"}
 - Phase 01 was already complete from previous session
+
+## Phase 02 — Ingestion — DONE
+
+Agent activated: rag-pipeline-engineer
+Date: 2026-09-17
+
+Files created:
+- backend/app/rag/__init__.py
+- backend/app/rag/parser.py (PDF, MD, TXT, DOCX)
+- backend/app/rag/chunker.py (recursive, 500 chars, 50 overlap)
+- backend/app/rag/embedder.py (fastembed BAAI/bge-small-en-v1.5)
+- backend/app/rag/vectorstore.py (Qdrant create/upsert/delete)
+- backend/tests/unit/test_parser.py (4 tests)
+- backend/tests/unit/test_chunker.py (5 tests)
+- backend/tests/unit/test_embedder.py (2 tests)
+- backend/tests/unit/test_vectorstore.py (2 tests)
+
+Test results: 23 passed, 0 failed (full suite)
+Phase 02 tests: 13 passed, 0 failed

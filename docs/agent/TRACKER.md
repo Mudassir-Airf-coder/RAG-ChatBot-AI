@@ -2,8 +2,8 @@
 
 | Phase | Status | Evidence | Commit |
 |---|---|---|---|
-| 01 Foundation | DONE | PROGRESS.md#phase-01 | pending |
-| 02 Ingestion | NOT_STARTED | — | — |
+| 01 Foundation | DONE | PROGRESS.md#phase-01 | 5a9ac77 |
+| 02 Ingestion | DONE | PROGRESS.md#phase-02 | pending |
 | 03 Retrieval | NOT_STARTED | — | — |
 | 04 Generation | NOT_STARTED | — | — |
 | 05 Storage | NOT_STARTED | — | — |
