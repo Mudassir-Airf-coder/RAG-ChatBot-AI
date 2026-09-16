@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.config import settings
 from app.exceptions import AppError
@@ -20,6 +22,9 @@ app.include_router(auth_router)
 app.include_router(documents_router)
 app.include_router(query_router)
 app.include_router(chats_router)
+
+static_dir = Path(__file__).parent.parent / "static"
+app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 
 
 @app.exception_handler(AppError)
