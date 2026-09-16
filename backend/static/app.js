@@ -44,6 +44,28 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function renderLoading() {
+    const div = document.createElement('div');
+    div.className = 'message assistant-message loading-msg';
+    div.id = 'loading-indicator';
+    div.innerHTML = '<span class="spinner"></span> Thinking...';
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeLoading() {
+    const el = document.getElementById('loading-indicator');
+    if (el) el.remove();
+}
+
 function renderUserMessage(text) {
     const div = document.createElement('div');
     div.className = 'message user-message';
@@ -104,6 +126,7 @@ async function sendMessage() {
     messageInput.style.height = 'auto';
 
     renderUserMessage(text);
+    renderLoading();
 
     try {
         let chatId = currentChatId;
@@ -121,10 +144,13 @@ async function sendMessage() {
             model,
         });
 
+        removeLoading();
         renderAssistantMessage(result.answer, result.citations);
         loadChatHistory();
     } catch (err) {
+        removeLoading();
         renderAssistantMessage('Error: ' + err.message, []);
+        showToast(err.message, 'error');
     }
 }
 
@@ -206,6 +232,7 @@ async function deleteChat(chatId, item) {
             chatMessages.innerHTML = '<div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your documents</p></div>';
         }
         loadChatHistory();
+        showToast('Chat deleted', 'info');
     } catch (err) {
         console.error('Failed to delete chat:', err);
     }
@@ -243,9 +270,11 @@ async function uploadDocument(file) {
         delBtn.textContent = '✕';
         delBtn.addEventListener('click', () => deleteDocument(data.id, item));
         item.appendChild(delBtn);
+        showToast(`Uploaded: ${file.name}`, 'success');
     } catch (err) {
         item.querySelector('.doc-status').textContent = 'FAILED';
         item.querySelector('.doc-status').className = 'doc-status status-failed';
+        showToast('Upload failed', 'error');
     }
 }
 
