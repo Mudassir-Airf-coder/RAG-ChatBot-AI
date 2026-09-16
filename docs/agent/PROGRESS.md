@@ -65,3 +65,17 @@ Definition of Done:
 ☑ Structured JSON logs emitted
 ☑ API key redaction verified by test
 ☑ All tests pass
+
+## 2026-09-17 — Agency Agents installed
+
+- Installed 90 agents from agency-agents (engineering, design, testing, project-management divisions)
+- Tool: opencode
+- Install path: .opencode/agents/
+- Record: docs/agent/AGENCY_AGENTS.md
+- Commit: 4570456
+
+## Phase 01 — Agent activation
+
+Agent activated: engineering-backend-architect
+- Verified: 10 tests pass, health check returns {"status":"ok"}
+- Phase 01 was already complete from previous session
