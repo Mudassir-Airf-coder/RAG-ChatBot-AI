@@ -350,6 +350,59 @@ select:focus, input:focus {
     display: none !important;
 }
 
+/* Document list */
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+}
+
+.doc-item:hover {
+    background: var(--surface-hover);
+}
+
+.doc-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-status {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.status-processing {
+    background: #ffa50033;
+    color: #ffa500;
+}
+
+.status-ready {
+    background: #00ff0033;
+    color: #00cc66;
+}
+
+.status-failed {
+    background: #ff444433;
+    color: #ff4444;
+}
+
+.doc-delete {
+    font-size: 12px;
+    padding: 4px 8px;
+    opacity: 0;
+}
+
+.doc-item:hover .doc-delete {
+    opacity: 1;
+}
+
 body:not(#app) {
     display: flex;
     justify-content: center;

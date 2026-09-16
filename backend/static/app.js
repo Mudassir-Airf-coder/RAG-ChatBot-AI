@@ -9,6 +9,9 @@ const sourceModal = document.getElementById('source-modal');
 const modalBody = document.getElementById('modal-body');
 const closeModalBtn = document.getElementById('close-modal');
 const modalBackdrop = sourceModal.querySelector('.modal-backdrop');
+const uploadBtn = document.getElementById('upload-btn');
+const fileInput = document.getElementById('file-input');
+const documentList = document.getElementById('document-list');
 
 const provider = sessionStorage.getItem('provider');
 const apiKey = sessionStorage.getItem('api_key');
@@ -123,7 +126,80 @@ async function sendMessage() {
         });
 
         renderAssistantMessage(result.answer, result.citations);
-        loadChatHistory();
+loadChatHistory();
+
+// Document upload
+uploadBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', async () => {
+    for (const file of fileInput.files) {
+        await uploadDocument(file);
+    }
+    fileInput.value = '';
+});
+
+async function uploadDocument(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const item = document.createElement('div');
+    item.className = 'doc-item';
+    item.innerHTML = `<span class="doc-name">${escapeHtml(file.name)}</span><span class="doc-status status-processing">PROCESSING</span>`;
+    documentList.prepend(item);
+
+    try {
+        const resp = await fetch('/api/v1/documents/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        item.querySelector('.doc-status').textContent = data.status;
+        item.querySelector('.doc-status').className = `doc-status status-${data.status.toLowerCase()}`;
+        item.dataset.id = data.id;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'icon-btn doc-delete';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', () => deleteDocument(data.id, item));
+        item.appendChild(delBtn);
+    } catch (err) {
+        item.querySelector('.doc-status').textContent = 'FAILED';
+        item.querySelector('.doc-status').className = 'doc-status status-failed';
+    }
+}
+
+async function deleteDocument(docId, item) {
+    try {
+        await apiCall(`/api/v1/documents/${docId}`, 'DELETE');
+        item.remove();
+    } catch (err) {
+        console.error('Failed to delete:', err);
+    }
+}
+
+async function loadDocuments() {
+    try {
+        const data = await apiCall('/api/v1/documents');
+        documentList.innerHTML = '';
+        (data.documents || []).forEach(doc => {
+            const item = document.createElement('div');
+            item.className = 'doc-item';
+            item.dataset.id = doc.id;
+            item.innerHTML = `
+                <span class="doc-name">${escapeHtml(doc.filename)}</span>
+                <span class="doc-status status-${doc.status.toLowerCase()}">${doc.status}</span>
+            `;
+            if (doc.status !== 'PROCESSING') {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'icon-btn doc-delete';
+                delBtn.textContent = '✕';
+                delBtn.addEventListener('click', () => deleteDocument(doc.id, item));
+                item.appendChild(delBtn);
+            }
+            documentList.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Failed to load documents:', err);
+    }
+}
+
+loadDocuments();
     } catch (err) {
         renderAssistantMessage('Error: ' + err.message, []);
     }
