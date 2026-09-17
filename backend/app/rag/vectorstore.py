@@ -1,3 +1,5 @@
+import uuid
+
 from numpy import ndarray
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -7,6 +9,8 @@ from qdrant_client.models import (
 )
 
 from app.config import settings
+
+_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
 
 def _get_client() -> QdrantClient:
@@ -38,9 +42,10 @@ def upsert_chunks(
 
     for chunk, embedding in zip(chunks, embeddings):
         chunk_id = f"chunk_{document_id}_{chunk['index']}"
+        point_id = str(uuid.uuid5(_NAMESPACE, chunk_id))
         points.append(
             PointStruct(
-                id=chunk_id,
+                id=point_id,
                 vector=embedding.tolist(),
                 payload={
                     "document_id": document_id,

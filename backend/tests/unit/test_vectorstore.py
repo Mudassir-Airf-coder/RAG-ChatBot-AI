@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock, patch
+import uuid
+
 import numpy as np
 
-from app.rag.vectorstore import upsert_chunks, delete_by_document_id
+from app.rag.vectorstore import upsert_chunks, delete_by_document_id, _NAMESPACE
 
 
 @patch("app.rag.vectorstore._get_client")
@@ -21,7 +23,9 @@ def test_upsert_chunks_creates_points(mock_get_client):
     call_args = mock_client.upsert.call_args
     points = call_args.kwargs["points"]
     assert len(points) == 2
-    assert points[0].id == "chunk_doc_001_0"
+    expected_id = str(uuid.uuid5(_NAMESPACE, "chunk_doc_001_0"))
+    assert points[0].id == expected_id
+    assert points[0].payload["chunk_id"] == "chunk_doc_001_0"
     assert points[0].payload["chunk_text"] == "first chunk"
     assert points[0].payload["document_id"] == "doc_001"
 
