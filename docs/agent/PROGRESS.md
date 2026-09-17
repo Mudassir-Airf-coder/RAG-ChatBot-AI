@@ -230,7 +230,15 @@ Files modified:
 
 Test results: 61 passed, 0 failed (full suite)
 
-## Summary
+## 2026-09-17 — Startup bug fixed
+
+- Bug: Backend failed to start (sqlite3.OperationalError)
+- Root cause: data/ and uploads/ directories did not exist
+- Existing tests passed because they used in-memory SQLite
+- Fixed: init_db creates parent dir; lifespan creates uploads/
+- Added 3 regression tests
+- Also replaced deprecated on_event with lifespan
+- Commit: 9e30fd6
 
 All 12 phases completed:
 - Phase 01: Foundation (FastAPI, config, logging, exceptions)
