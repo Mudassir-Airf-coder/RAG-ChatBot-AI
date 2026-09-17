@@ -150,3 +150,36 @@ def test_factory_picks_groq():
     from app.llm.groq import GroqProvider
     p = get_provider("https://api.groq.com/openai/v1", "test")
     assert isinstance(p, GroqProvider)
+
+
+def test_config_persists_across_reload(tmp_path, monkeypatch):
+    from app.api import provider
+    monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
+    provider.sessions = {}
+    client = TestClient(app)
+    client.post("/api/v1/provider/config", json={
+        "name": "Groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": "test",
+        "model": "llama-3.1-8b-instant",
+    })
+    reloaded = provider._load_sessions()
+    assert len(reloaded) == 1
+    assert list(reloaded.values())[0]["model"] == "llama-3.1-8b-instant"
+
+
+def test_config_sets_cookie_after_persist(tmp_path, monkeypatch):
+    from app.api import provider
+    monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
+    provider.sessions = {}
+    client = TestClient(app)
+    resp = client.post("/api/v1/provider/config", json={
+        "name": "Groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": "gsk_test",
+        "model": "llama-3.1-8b-instant",
+    })
+    assert resp.status_code == 200
+    assert "rag_session" in resp.cookies
+    reloaded = provider._load_sessions()
+    assert len(reloaded) == 1

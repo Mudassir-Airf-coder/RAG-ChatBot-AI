@@ -1,4 +1,7 @@
+import json
+import os
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, Response
 from pydantic import BaseModel
@@ -8,7 +11,28 @@ from app.llm import get_provider
 
 router = APIRouter(prefix="/api/v1/provider", tags=["provider"])
 
-sessions: dict[str, dict] = {}
+SESSIONS_FILE = Path("data/sessions.json")
+
+
+def _load_sessions() -> dict:
+    if not SESSIONS_FILE.exists():
+        return {}
+    try:
+        return json.loads(SESSIONS_FILE.read_text())
+    except Exception:
+        return {}
+
+
+def _save_sessions(s: dict) -> None:
+    SESSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SESSIONS_FILE.write_text(json.dumps(s))
+    try:
+        os.chmod(SESSIONS_FILE, 0o600)
+    except Exception:
+        pass
+
+
+sessions: dict[str, dict] = _load_sessions()
 
 
 class ModelsRequest(BaseModel):
@@ -61,6 +85,7 @@ async def save_config(request: ConfigRequest, response: Response) -> dict:
         "api_key": request.api_key,
         "model": request.model,
     }
+    _save_sessions(sessions)
     response.set_cookie(
         key="rag_session",
         value=session_id,
