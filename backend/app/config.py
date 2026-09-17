@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     sqlite_path: str = "./data/chatbot.db"
     upload_dir: str = "./uploads"
     groq_base_url: str = "https://api.groq.com/openai/v1"
+    opencode_zen_base_url: str = "https://opencode.ai/zen/v1"
     log_level: str = "INFO"
 
 

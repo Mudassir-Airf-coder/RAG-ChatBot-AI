@@ -1,55 +1,387 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Chatbot</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Chatbot</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--border:#2a2a3a;--text:#e0e0e8;--text2:#8888a0;--accent:#6c5ce7;--accent2:#a29bfe;--green:#00b894;--red:#e74c3c;--orange:#fdcb6e;--radius:8px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+.app{display:grid;grid-template-columns:280px 1fr 320px;height:100vh}
+
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px}
+.sidebar h2{font-size:18px;margin-bottom:16px;color:var(--accent2)}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500}
+.btn:hover{opacity:.85}
+.btn-sm{padding:6px 10px;font-size:12px}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--red)}
+
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:16px 0 8px}
+.file-input{display:none}
+.doc-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:var(--radius);margin-bottom:4px;font-size:13px;background:var(--surface2)}
+.doc-item .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-status{font-size:11px;padding:2px 6px;border-radius:4px;font-weight:600}
+.status-ready{background:#00b89422;color:var(--green)}
+.status-processing{background:#fdcb6e22;color:var(--orange)}
+.status-failed{background:#e74c3c22;color:var(--red)}
+
+.chat-main{display:flex;flex-direction:column;background:var(--bg)}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text2)}
+.empty-state h2{font-size:24px;margin-bottom:8px;color:var(--accent2)}
+.message{max-width:80%;padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.6}
+.user-message{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:2px}
+.assistant-message{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:2px}
+.assistant-message.abstained{border:1px solid var(--orange);color:var(--orange)}
+.citations{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.citation{background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600}
+.citation:hover{opacity:.8}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--text2);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.input-area{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
+.input-area textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-size:14px;resize:none;max-height:120px;font-family:inherit}
+.input-area textarea:focus{outline:none;border-color:var(--accent)}
+
+.config-panel{background:var(--surface);border-left:1px solid var(--border);padding:16px;overflow-y:auto}
+.config-panel h3{font-size:15px;margin-bottom:16px;color:var(--accent2)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.config-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.status-msg{font-size:12px;margin-top:8px;padding:6px 10px;border-radius:var(--radius)}
+.status-ok{background:#00b89422;color:var(--green)}
+.status-err{background:#e74c3c22;color:var(--red)}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:var(--radius);font-size:13px;z-index:1000;animation:fadeIn .3s}
+.toast-success{background:var(--green);color:#000}
+.toast-error{background:var(--red);color:#fff}
+.toast-info{background:var(--accent);color:#fff}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center}
+.modal.hidden{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.modal-content{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modal-header h3{font-size:16px}
+pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-size:13px;white-space:pre-wrap;overflow-x:auto}
+</style>
 </head>
 <body>
-    <div id="app">
-        <div id="sidebar">
-            <div class="sidebar-header">
-                <button id="new-chat-btn" class="btn btn-primary">+ New Chat</button>
-                <button id="toggle-sidebar" class="icon-btn">☰</button>
-            </div>
-            <div id="documents-section">
-                <h3>Documents</h3>
-                <input type="file" id="file-input" style="display:none" multiple>
-                <button id="upload-btn" class="btn btn-primary" style="width:100%;margin-bottom:12px">Upload Document</button>
-                <div id="document-list"></div>
-            </div>
-            <div id="history-section">
-                <h3>Chats</h3>
-                <div id="chat-history"></div>
-            </div>
-        </div>
+<div class="app">
+  <div class="sidebar">
+    <h2>RAG Chatbot</h2>
+    <div class="section-title">Documents</div>
+    <input type="file" id="file-input" class="file-input" multiple>
+    <button class="btn" style="width:100%;margin-bottom:12px" onclick="document.getElementById('file-input').click()">Upload Document</button>
+    <div id="document-list"></div>
+  </div>
 
-        <div id="chat-area">
-            <div id="chat-messages">
-                <div class="empty-state">
-                    <h2>RAG Chatbot</h2>
-                    <p>Ask questions about your documents</p>
-                </div>
-            </div>
-            <div id="input-area">
-                <textarea id="message-input" placeholder="Type your question..." rows="1"></textarea>
-                <button id="send-btn" class="btn btn-primary">Send</button>
-            </div>
-        </div>
+  <div class="chat-main">
+    <div class="chat-messages" id="chat-messages">
+      <div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your uploaded documents</p></div>
     </div>
-
-    <div id="source-modal" class="modal hidden">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Source Chunk</h3>
-                <button id="close-modal" class="icon-btn">✕</button>
-            </div>
-            <div id="modal-body"></div>
-        </div>
+    <div class="input-area">
+      <textarea id="message-input" placeholder="Type your question..." rows="1"></textarea>
+      <button class="btn" id="send-btn">Send</button>
     </div>
+  </div>
 
-    <script src="app.js"></script>
+  <div class="config-panel">
+    <h3>Provider Settings</h3>
+    <div class="field">
+      <label>Provider Name</label>
+      <input id="cfg-name" value="Groq" placeholder="Groq">
+    </div>
+    <div class="field">
+      <label>Base URL</label>
+      <input id="cfg-url" value="https://api.groq.com/openai/v1" placeholder="https://api.groq.com/openai/v1">
+    </div>
+    <div class="field">
+      <label>API Key</label>
+      <input id="cfg-key" type="password" placeholder="gsk_...">
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="cfg-model"><option value="">Fetch models first</option></select>
+    </div>
+    <div class="config-actions">
+      <button class="btn btn-sm" id="fetch-models-btn">Fetch Models</button>
+      <button class="btn btn-sm btn-outline" id="test-btn">Test</button>
+      <button class="btn btn-sm" id="save-btn">Save</button>
+    </div>
+    <div id="config-status"></div>
+  </div>
+</div>
+
+<div class="modal hidden" id="source-modal">
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header"><h3>Source Chunk</h3><button class="btn btn-sm btn-outline" id="close-modal">✕</button></div>
+    <pre id="modal-body"></pre>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1';
+const chatMessages = document.getElementById('chat-messages');
+const messageInput = document.getElementById('message-input');
+const sendBtn = document.getElementById('send-btn');
+const cfgName = document.getElementById('cfg-name');
+const cfgUrl = document.getElementById('cfg-url');
+const cfgKey = document.getElementById('cfg-key');
+const cfgModel = document.getElementById('cfg-model');
+const configStatus = document.getElementById('config-status');
+
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function escapeHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function renderLoading() {
+  const d = document.createElement('div');
+  d.className = 'message assistant-message loading-msg';
+  d.id = 'loading-indicator';
+  d.innerHTML = '<span class="spinner"></span> Thinking...';
+  chatMessages.appendChild(d);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeLoading() {
+  const el = document.getElementById('loading-indicator');
+  if (el) el.remove();
+}
+
+function renderUserMessage(text) {
+  const d = document.createElement('div');
+  d.className = 'message user-message';
+  d.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+  chatMessages.appendChild(d);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderAssistantMessage(answer, citations, abstained) {
+  const d = document.createElement('div');
+  d.className = 'message assistant-message' + (abstained ? ' abstained' : '');
+  let citationsHtml = '';
+  if (citations && citations.length > 0) {
+    citationsHtml = '<div class="citations">' +
+      citations.map((c, i) => `<span class="citation" data-idx="${i}">[${i+1}]</span>`).join('') +
+      '</div>';
+  }
+  d.innerHTML = `<div class="message-content">${escapeHtml(answer)}</div>${citationsHtml}`;
+  chatMessages.appendChild(d);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  d.querySelectorAll('.citation').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      const c = citations[idx];
+      if (c) {
+        document.getElementById('modal-body').textContent = c.quote || c.chunk_text || 'No text available';
+        document.getElementById('source-modal').classList.remove('hidden');
+      }
+    });
+  });
+}
+
+document.getElementById('close-modal').addEventListener('click', () => document.getElementById('source-modal').classList.add('hidden'));
+document.getElementById('modal-backdrop').addEventListener('click', () => document.getElementById('source-modal').classList.add('hidden'));
+
+async function sendMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  const saved = sessionStorage.getItem('rag_config');
+  if (!saved) {
+    showToast('Configure and save a provider first.', 'error');
+    return;
+  }
+
+  messageInput.value = '';
+  messageInput.style.height = 'auto';
+  renderUserMessage(text);
+  renderLoading();
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch(API + '/query', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ question: text }),
+      credentials: 'same-origin',
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    removeLoading();
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    renderAssistantMessage(data.answer, data.citations || [], data.abstained);
+    loadDocuments();
+  } catch (err) {
+    clearTimeout(timeout);
+    removeLoading();
+    if (err.name === 'AbortError') {
+      showToast('Request timed out. Try again.', 'error');
+    } else {
+      showToast(err.message, 'error');
+      renderAssistantMessage('Error: ' + err.message, [], false);
+    }
+  }
+}
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = messageInput.scrollHeight + 'px'; });
+
+// Provider config
+document.getElementById('fetch-models-btn').addEventListener('click', async () => {
+  const url = cfgUrl.value.trim();
+  const key = cfgKey.value.trim();
+  if (!url || !key) { showToast('Enter base URL and API key', 'error'); return; }
+
+  try {
+    const res = await fetch(API + '/provider/models', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base_url: url, api_key: key })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+
+    cfgModel.innerHTML = '';
+    (data.models || []).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      cfgModel.appendChild(opt);
+    });
+    showToast(`Loaded ${data.models.length} models`, 'success');
+  } catch (err) {
+    showToast('Failed to fetch models: ' + err.message, 'error');
+  }
+});
+
+document.getElementById('test-btn').addEventListener('click', async () => {
+  const url = cfgUrl.value.trim();
+  const key = cfgKey.value.trim();
+  const model = cfgModel.value;
+  if (!url || !key || !model) { showToast('Fill all fields', 'error'); return; }
+
+  const el = document.getElementById('config-status');
+  el.className = 'status-msg';
+  el.textContent = 'Testing...';
+  el.style.display = 'block';
+
+  try {
+    const res = await fetch(API + '/provider/test', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base_url: url, api_key: key, model })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      el.className = 'status-msg status-ok';
+      el.textContent = data.message;
+    } else {
+      el.className = 'status-msg status-err';
+      el.textContent = data.error;
+    }
+  } catch (err) {
+    el.className = 'status-msg status-err';
+    el.textContent = err.message;
+  }
+});
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const name = cfgName.value.trim();
+  const url = cfgUrl.value.trim();
+  const key = cfgKey.value.trim();
+  const model = cfgModel.value;
+  if (!name || !url || !key || !model) { showToast('Fill all fields', 'error'); return; }
+
+  try {
+    const res = await fetch(API + '/provider/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ name, base_url: url, api_key: key, model })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+
+    sessionStorage.setItem('rag_config', JSON.stringify({ name, base_url: url, api_key: key, model }));
+    showToast('Configuration saved', 'success');
+  } catch (err) {
+    showToast('Failed to save: ' + err.message, 'error');
+  }
+});
+
+// Load saved config on page load
+(function loadSavedConfig() {
+  const saved = sessionStorage.getItem('rag_config');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      cfgName.value = c.name || '';
+      cfgUrl.value = c.base_url || '';
+      cfgKey.value = c.api_key || '';
+    } catch {}
+  }
+})();
+
+// Documents
+async function loadDocuments() {
+  try {
+    const res = await fetch(API + '/documents');
+    const data = await res.json();
+    const list = document.getElementById('document-list');
+    list.innerHTML = '';
+    (data.documents || []).forEach(doc => {
+      const item = document.createElement('div');
+      item.className = 'doc-item';
+      item.innerHTML = `<span class="name">${escapeHtml(doc.filename)}</span><span class="doc-status status-${doc.status.toLowerCase()}">${doc.status}</span>`;
+      list.appendChild(item);
+    });
+  } catch {}
+}
+
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  for (const file of e.target.files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch(API + '/documents/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      showToast(`Uploaded: ${file.name}`, 'success');
+    } catch (err) {
+      showToast('Upload failed: ' + err.message, 'error');
+    }
+  }
+  e.target.value = '';
+  loadDocuments();
+});
+
+loadDocuments();
+</script>
 </body>
 </html>
