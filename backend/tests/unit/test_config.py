@@ -10,4 +10,5 @@ def test_settings_loads_defaults():
     assert s.upload_dir == "./uploads"
     assert s.groq_base_url == "https://api.groq.com/openai/v1"
     assert s.opencode_zen_base_url == "https://opencode.ai/zen/v1"
+    assert s.max_upload_mb == 2048
     assert s.log_level == "INFO"

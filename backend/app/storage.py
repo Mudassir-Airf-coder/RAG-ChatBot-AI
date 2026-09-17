@@ -104,6 +104,33 @@ def delete_document(document_id: str, sqlite_path: str = ":memory:") -> None:
     conn.close()
 
 
+def mark_stale_processing_as_failed(sqlite_path: str, max_age_seconds: int = 300) -> int:
+    cutoff = datetime.now(timezone.utc).timestamp() - max_age_seconds
+    conn = _connect(sqlite_path)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, created_at FROM documents WHERE status = 'PROCESSING'")
+        stale_ids = []
+        for doc_id, created in cur.fetchall():
+            try:
+                ts = datetime.fromisoformat(created).timestamp()
+            except Exception:
+                continue
+            if ts < cutoff:
+                stale_ids.append(doc_id)
+        for doc_id in stale_ids:
+            cur.execute(
+                "UPDATE documents SET status = 'FAILED', "
+                "error_message = 'Processing timed out', "
+                "updated_at = ? WHERE id = ?",
+                (_now(), doc_id),
+            )
+        conn.commit()
+        return len(stale_ids)
+    finally:
+        conn.close()
+
+
 def create_chat(
     chat_id: str,
     title: str = "New chat",

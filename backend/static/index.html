@@ -27,6 +27,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
 
 .header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none}
 .header-title{font-size:15px;color:var(--accent2)}
 .header-actions{display:flex;gap:6px}
 .header-icon-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:var(--radius);cursor:pointer;display:grid;place-items:center;transition:background .15s,color .15s}
@@ -35,6 +37,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 .section-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:16px 0 8px}
 .file-input{display:none}
+.upload-status{font-size:12px;color:var(--text2);padding:6px 0;text-align:center;min-height:18px}
+.upload-status.error{color:var(--red)}
+.upload-status.success{color:var(--green)}
+.upload-status .spinner{display:inline-block;margin-right:6px;vertical-align:middle}
 .doc-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);margin-bottom:4px;font-size:13px;background:var(--surface2)}
 .doc-item .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .doc-status{font-size:11px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
@@ -92,14 +98,18 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
 <div class="layout" id="layout">
   <div class="sidebar">
     <div class="section-title">Documents</div>
-    <input type="file" id="file-input" class="file-input" multiple>
-    <button class="btn" style="width:100%;margin-bottom:12px" onclick="document.getElementById('file-input').click()">Upload Document</button>
+    <input type="file" id="file-input" accept=".pdf,.txt,.md,.docx" hidden>
+    <label for="file-input" class="btn" style="width:100%;margin-bottom:12px;display:block;text-align:center;cursor:pointer">Upload Document</label>
+    <div id="upload-status" class="upload-status"></div>
     <div id="document-list"></div>
   </div>
 
   <div class="chat-main">
     <div class="header">
-      <span class="header-title">RAG Chatbot</span>
+      <div class="header-brand">
+        <img src="/logo.jpeg" alt="RAG Chatbot" class="brand-logo">
+        <span class="header-title">RAG Chatbot</span>
+      </div>
       <div class="header-actions">
         <button class="header-icon-btn" id="toggle-left" aria-label="Toggle documents panel" title="Documents">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -168,6 +178,7 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
 </div>
 
 <script>
+console.log('[rag] UI loaded');
 const API = '/api/v1';
 const layout = document.getElementById('layout');
 const chatMessages = document.getElementById('chat-messages');
@@ -180,7 +191,7 @@ const cfgModel = document.getElementById('cfg-model');
 const providerSelect = document.getElementById('cfg-provider');
 const configStatus = document.getElementById('config-status');
 
-// === FIX 1: Panel toggles ===
+// === Panel toggles ===
 function updateCollapseState() {
   const left = layout.classList.contains('panels-collapsed-left');
   const right = layout.classList.contains('panels-collapsed-right');
@@ -223,6 +234,13 @@ function escapeHtml(text) {
   const d = document.createElement('div');
   d.textContent = text;
   return d.innerHTML;
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 }
 
 // === Chat ===
@@ -328,7 +346,7 @@ sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = messageInput.scrollHeight + 'px'; });
 
-// === FIX 3: Provider presets ===
+// === Provider presets ===
 const PROVIDER_PRESETS = {
   groq: { name: 'Groq', base_url: 'https://api.groq.com/openai/v1' },
   opencode: { name: 'OpenCode Zen', base_url: 'https://opencode.ai/zen/v1' },
@@ -447,7 +465,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
   restoreProviderSelection();
 })();
 
-// === FIX 2: Documents with delete button ===
+// === Documents with delete button ===
 async function loadDocuments() {
   try {
     const res = await fetch(API + '/documents');
@@ -507,20 +525,76 @@ async function loadDocuments() {
   }
 }
 
-document.getElementById('file-input').addEventListener('change', async (e) => {
-  for (const file of e.target.files) {
+// === Upload with progress (XHR) ===
+function uploadWithProgress(file, onProgress) {
+  return new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append('file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', API + '/documents/upload');
+
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable && onProgress) {
+        onProgress(evt.loaded, evt.total);
+      }
+    };
+
+    xhr.onload = () => {
+      let data = null;
+      try { data = JSON.parse(xhr.responseText); } catch {}
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        const msg = (data && (data.detail || (data.error && data.error.message))) || ('HTTP ' + xhr.status);
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.ontimeout = () => reject(new Error('Upload timed out'));
+    xhr.timeout = 0;
+
+    xhr.send(formData);
+  });
+}
+
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+
+  const statusEl = document.getElementById('upload-status');
+  const fileInput = e.target;
+
+  for (const file of files) {
+    statusEl.className = 'upload-status';
+    statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' (' + formatBytes(file.size) + ')…';
+
     try {
-      const res = await fetch(API + '/documents/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+      const data = await uploadWithProgress(file, (loaded, total) => {
+        const pct = Math.round((loaded / total) * 100);
+        statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' — ' + pct + '% (' + formatBytes(loaded) + ' / ' + formatBytes(total) + ')';
+      });
+
+      const status = (data && data.status) || 'unknown';
+      if (status.toUpperCase() === 'FAILED') {
+        throw new Error((data && data.error_message) || 'Backend returned FAILED status');
+      }
+
+      statusEl.className = 'upload-status success';
+      statusEl.textContent = 'Uploaded: ' + file.name + ' (' + status + ')';
       showToast('Uploaded: ' + file.name, 'success');
     } catch (err) {
+      console.error('[rag] upload error', err);
+      statusEl.className = 'upload-status error';
+      statusEl.textContent = 'Failed: ' + file.name + ' — ' + err.message;
       showToast('Upload failed: ' + err.message, 'error');
     }
   }
-  e.target.value = '';
+
+  fileInput.value = '';
   loadDocuments();
+  setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'upload-status'; }, 5000);
 });
 
 loadDocuments();

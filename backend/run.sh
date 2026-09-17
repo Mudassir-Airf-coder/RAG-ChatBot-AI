@@ -17,4 +17,15 @@ fi
 echo "Qdrant ready."
 
 echo "Starting backend..."
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --reload \
+    --reload-dir app \
+    --reload-dir tests \
+    --reload-exclude '*.pyc' \
+    --reload-exclude '__pycache__/*' \
+    --reload-exclude '.venv/*' \
+    --reload-exclude 'uploads/*' \
+    --reload-exclude 'data/*' \
+    --reload-exclude '.pytest_cache/*'
