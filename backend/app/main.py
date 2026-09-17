@@ -35,9 +35,6 @@ app.include_router(documents_router)
 app.include_router(query_router)
 app.include_router(chats_router)
 
-static_dir = Path(__file__).parent.parent / "static"
-app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
@@ -48,3 +45,7 @@ async def app_error_handler(request: Request, exc: AppError):
 async def health() -> dict:
     logger.info("health_check")
     return {"status": "ok"}
+
+
+static_dir = Path(__file__).parent.parent / "static"
+app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
