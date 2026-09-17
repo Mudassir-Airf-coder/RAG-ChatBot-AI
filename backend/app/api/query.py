@@ -4,8 +4,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.config import settings
-from app.exceptions import ValidationError, NotFoundError
-from app.api.auth import _get_provider
+from app.exceptions import ValidationError
+from app.llm.groq import GroqProvider
 from app.rag.retriever import retrieve
 from app.rag.generator import generate_answer
 from app.storage import create_message, create_chat, update_chat_timestamp
@@ -35,7 +35,10 @@ class QueryResponse(BaseModel):
 
 @router.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest) -> QueryResponse:
-    llm = _get_provider(request.provider, request.api_key)
+    if request.provider != "groq":
+        raise ValidationError("Unsupported provider. Use 'groq'.")
+
+    llm = GroqProvider(request.api_key)
 
     chunks = retrieve(request.question, top_k=5)
     if not chunks:

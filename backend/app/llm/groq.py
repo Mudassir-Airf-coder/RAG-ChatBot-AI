@@ -1,12 +1,11 @@
 import httpx
 
+from app.config import settings
 from app.exceptions import ProviderError, ValidationError
 from app.llm.base import LLMProvider
 
 
 class GroqProvider(LLMProvider):
-    BASE_URL = "https://api.groq.com/openai/v1"
-
     def __init__(self, api_key: str) -> None:
         api_key = api_key.strip()
         try:
@@ -20,7 +19,7 @@ class GroqProvider(LLMProvider):
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(
-                    f"{self.BASE_URL}/models",
+                    f"{settings.groq_base_url}/models",
                     headers=self.headers,
                     timeout=10,
                 )
@@ -37,7 +36,7 @@ class GroqProvider(LLMProvider):
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.post(
-                    f"{self.BASE_URL}/chat/completions",
+                    f"{settings.groq_base_url}/chat/completions",
                     headers=self.headers,
                     json={"model": model, "messages": messages},
                     timeout=60,

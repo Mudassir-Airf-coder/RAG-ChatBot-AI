@@ -69,7 +69,7 @@ uv run pytest -m live
 ## How to configure provider (in app)
 
 1. Open `http://localhost:8000`
-2. Select a provider from the dropdown: **Groq** or **OpenCode Zen**
+2. Select a provider from the dropdown: **Groq**
 3. Paste your API key into the password field
 4. Click **Connect** to validate
 5. Select a model from the dropdown

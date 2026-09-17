@@ -45,7 +45,7 @@ Mock everything external:
 | `rag/generator.py` | Mock LLM provider; return fake answer |
 | `storage.py` | Use in-memory SQLite (no file) |
 | `llm/groq.py` | Mock httpx responses |
-| `llm/opencode_zen.py` | Mock httpx responses |
+| `llm/.py` | Mock httpx responses |
 
 ### API tests
 Use FastAPI `TestClient` with mocked dependencies:

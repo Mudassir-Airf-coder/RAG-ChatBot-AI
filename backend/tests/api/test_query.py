@@ -11,15 +11,15 @@ def client():
     return TestClient(app)
 
 
-@patch("app.api.query._get_provider")
+@patch("app.api.query.GroqProvider")
 @patch("app.api.query.retrieve")
-def test_query_returns_answer(mock_retrieve, mock_get_provider, client, tmp_path):
+def test_query_returns_answer(mock_retrieve, mock_provider_cls, client, tmp_path):
     mock_retrieve.return_value = [
         {"chunk_id": "c1", "document_id": "d1", "chunk_index": 0, "chunk_text": "ctx", "metadata": {}, "score": 0.9}
     ]
     mock_provider = MagicMock()
     mock_provider.chat.return_value = "The answer is yes."
-    mock_get_provider.return_value = mock_provider
+    mock_provider_cls.return_value = mock_provider
 
     db = str(tmp_path / "test.db")
     init_db(db)

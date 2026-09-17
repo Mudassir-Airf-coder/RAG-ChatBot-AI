@@ -56,7 +56,7 @@ Submodules:
 - `llm/`
   - `base.py`: LLMProvider interface
   - `groq.py`: Groq chat completions adapter
-  - `opencode_zen.py`: OpenCode Zen chat completions adapter
+  - `.py`: OpenCode Zen chat completions adapter
 - `rag/`
   - `parser.py`: parse PDF/MD/TXT/DOCX into raw text with basic metadata
   - `chunker.py`: recursive chunking (500 chars, 50 overlap)

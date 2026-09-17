@@ -1,8 +1,7 @@
 from pydantic import BaseModel
 
-from app.exceptions import ProviderError
+from app.exceptions import ValidationError
 from app.llm.groq import GroqProvider
-from app.llm.opencode_zen import OpenCodeZenProvider
 
 from fastapi import APIRouter
 
@@ -21,15 +20,8 @@ class ModelsResponse(BaseModel):
 
 @router.post("/models", response_model=ModelsResponse)
 async def get_models(request: AuthRequest) -> ModelsResponse:
-    provider = _get_provider(request.provider, request.api_key)
+    if request.provider != "groq":
+        raise ValidationError("Unsupported provider. Use 'groq'.")
+    provider = GroqProvider(request.api_key)
     models = await provider.get_models()
     return ModelsResponse(provider=request.provider, models=models)
-
-
-def _get_provider(name: str, api_key: str):
-    if name == "groq":
-        return GroqProvider(api_key)
-    elif name == "opencode_zen":
-        return OpenCodeZenProvider(api_key)
-    else:
-        raise ProviderError(f"Unknown provider: {name}")

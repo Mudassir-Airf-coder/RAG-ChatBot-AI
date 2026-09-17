@@ -4,7 +4,7 @@
 
 ### UI / UX
 1. Login page
-   - Provider dropdown: **Groq** or **OpenCode Zen**
+   - Provider dropdown: **Groq**
    - API key input (password field)
    - Connect button validates key by calling provider `/models`
    - Model dropdown populated on success
@@ -143,7 +143,7 @@ The human must provide the exact base URL. Until then:
 
 ## Session model
 - Browser `sessionStorage` stores:
-  - `provider`: `groq` | `opencode_zen`
+  - `provider`: `groq` | ``
   - `api_key`: raw API key string
   - `model`: model id returned by `/models`
 - Backend expects:

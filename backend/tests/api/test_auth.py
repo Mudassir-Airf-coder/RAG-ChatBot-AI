@@ -10,11 +10,11 @@ def client():
     return TestClient(app)
 
 
-@patch("app.api.auth._get_provider")
-def test_get_models_valid_key(mock_get_provider):
+@patch("app.api.auth.GroqProvider")
+def test_get_models_valid_key(mock_provider_cls):
     mock_provider = AsyncMock()
     mock_provider.get_models.return_value = ["model-a", "model-b"]
-    mock_get_provider.return_value = mock_provider
+    mock_provider_cls.return_value = mock_provider
 
     client = TestClient(app)
     resp = client.post("/api/v1/auth/models", json={"provider": "groq", "api_key": "test-key"})
@@ -24,15 +24,18 @@ def test_get_models_valid_key(mock_get_provider):
     assert "model-a" in data["models"]
 
 
-@patch("app.api.auth._get_provider")
-def test_get_models_invalid_key(mock_get_provider):
-    from app.exceptions import ProviderError
-    mock_get_provider.side_effect = ProviderError("Invalid API key")
-
+def test_opencode_zen_returns_400():
     client = TestClient(app)
-    resp = client.post("/api/v1/auth/models", json={"provider": "groq", "api_key": "bad"})
-    assert resp.status_code == 502
-    assert resp.json()["error"]["code"] == "PROVIDER_ERROR"
+    resp = client.post("/api/v1/auth/models", json={"provider": "opencode_zen", "api_key": "key"})
+    assert resp.status_code == 400
+    assert "Unsupported provider" in resp.json()["error"]["message"]
+
+
+def test_unknown_provider_returns_400():
+    client = TestClient(app)
+    resp = client.post("/api/v1/auth/models", json={"provider": "unknown", "api_key": "key"})
+    assert resp.status_code == 400
+    assert "Unsupported provider" in resp.json()["error"]["message"]
 
 
 def test_non_ascii_key_returns_400():

@@ -16,18 +16,18 @@ Use FastAPI for the backend and plain HTML + CSS + JavaScript for the frontend. 
 
 ---
 
-## ADR 002: Only 2 LLM providers (Groq + OpenCode Zen)
+## ADR 002: Single LLM provider (Groq)
 
 ### Context
 RAG chatbots often add many providers with fallback chains and configuration sprawl.
 
 ### Decision
-Support exactly 2 providers: **Groq** and **OpenCode Zen**. No others. No fallback chains.
+Support exactly 1 provider: **Groq**. No others. No fallback chains.
 
 ### Consequences
-- Each provider has a named adapter implementing the same interface.
-- Users who want another provider can swap the OpenCode Zen adapter URL.
-- Tradeoff: no fallback if one provider is down.
+- Groq adapter implements the LLMProvider interface.
+- Groq base URL is hardcoded in config (no .env required).
+- Tradeoff: no fallback if Groq is down.
 - Acceptable: single-user workflow, no SLA.
 
 ---

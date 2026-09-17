@@ -1,35 +1,26 @@
 # RAG Chatbot
 
-## What this project is
 A local-first RAG (retrieval-augmented generation) chatbot that lets a user upload documents, then ask questions grounded in those documents.
 
 - Single-user workflow (local developer/demo user)
 - Documents are embedded locally and indexed in Qdrant
 - Chats and document metadata are stored in SQLite
-- Exactly two LLM providers: **Groq** and **OpenCode Zen**
+- LLM provider: **Groq**
 
-## What this project is NOT
-- Not a production SaaS
-- Not multi-tenant
-- Not a Next.js or Streamlit application
-- Not a collection of fallbacks and workarounds
-- Not a solution that claims “done” without verification steps
+## Quick start
 
-## Screenshot
-(Place a screenshot here after you have a working UI.)
+```bash
+./run.sh
+```
 
-## Quick setup (30-second version)
-1. Prereqs: Python 3.11+, `uv`, Docker
-2. Start Qdrant (Docker)
-3. Configure providers in the app
-4. Start the FastAPI backend
-5. Open `http://localhost:8000/`
+Then open http://localhost:8000/login.html
 
-Detailed steps: `docs/SETUP.md`
+**Prerequisites:** Python 3.11+, `uv`, Docker
 
-Deep dives:
-- `docs/ARCHITECTURE.md`
-- `docs/SPECIFICATION.md`
-- `docs/API.md`
-- `docs/DATA_MODEL.md`
+## Documentation
 
+- `docs/ARCHITECTURE.md` - System design
+- `docs/SPECIFICATION.md` - Requirements
+- `docs/API.md` - Endpoint reference
+- `docs/DATA_MODEL.md` - Schema
+- `docs/SETUP.md` - Detailed setup
