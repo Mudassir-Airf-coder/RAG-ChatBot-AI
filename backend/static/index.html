@@ -236,6 +236,14 @@ function escapeHtml(text) {
   return d.innerHTML;
 }
 
+function extractError(obj, fallback) {
+  if (!obj) return fallback;
+  if (obj.error && typeof obj.error.message === 'string') return obj.error.message;
+  if (typeof obj.detail === 'string') return obj.detail;
+  if (typeof obj.message === 'string') return obj.message;
+  return fallback;
+}
+
 function formatBytes(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -324,7 +332,7 @@ async function sendMessage() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'HTTP ' + res.status);
+      throw new Error(extractError(err, 'HTTP ' + res.status));
     }
 
     const data = await res.json();
@@ -382,7 +390,7 @@ document.getElementById('fetch-models-btn').addEventListener('click', async () =
       body: JSON.stringify({ base_url: url, api_key: key })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'HTTP ' + res.status);
+    if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
 
     cfgModel.innerHTML = '';
     (data.models || []).forEach(m => {
@@ -442,7 +450,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
       body: JSON.stringify({ name, base_url: url, api_key: key, model })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'HTTP ' + res.status);
+    if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
 
     sessionStorage.setItem('rag_config', JSON.stringify({ name, base_url: url, api_key: key, model }));
     showToast('Configuration saved', 'success');
