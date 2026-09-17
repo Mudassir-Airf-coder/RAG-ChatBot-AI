@@ -85,6 +85,10 @@ async def delete_doc(id: str) -> None:
     if not doc:
         raise NotFoundError(f"Document {id} not found")
     delete_by_document_id(id)
+    upload_dir = Path(settings.upload_dir) / id
+    if upload_dir.exists():
+        import shutil
+        shutil.rmtree(upload_dir)
     storage_delete_document(id, settings.sqlite_path)
 
 

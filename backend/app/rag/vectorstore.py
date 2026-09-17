@@ -4,6 +4,9 @@ from numpy import ndarray
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
     PointStruct,
     VectorParams,
 )
@@ -65,5 +68,12 @@ def delete_by_document_id(document_id: str, collection_name: str | None = None) 
     client = _get_client()
     client.delete(
         collection_name=name,
-        points_selector={"filter": {"must": [{"key": "document_id", "match": {"value": document_id}}]}},
+        points_selector=Filter(
+            must=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
+            ]
+        ),
     )
