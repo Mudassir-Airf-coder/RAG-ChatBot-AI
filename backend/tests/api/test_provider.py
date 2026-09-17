@@ -122,3 +122,31 @@ def test_config_stores_session(client):
 def test_get_models_old_method_returns_404(client):
     resp = client.get("/api/v1/provider/models")
     assert resp.status_code == 404
+
+
+@patch("app.api.provider.get_provider")
+def test_models_opencode_zen_url(mock_get_provider, client):
+    mock_p = AsyncMock()
+    mock_p.get_models.return_value = ["gpt-4o-mini", "claude-3-haiku"]
+    mock_get_provider.return_value = mock_p
+
+    resp = client.post("/api/v1/provider/models", json={
+        "base_url": "https://opencode.ai/zen/v1",
+        "api_key": "oc_test",
+    })
+    assert resp.status_code == 200
+    assert "gpt-4o-mini" in resp.json()["models"]
+
+
+def test_factory_picks_opencode_zen():
+    from app.llm import get_provider
+    from app.llm.opencode_zen import OpenCodeZenProvider
+    p = get_provider("https://opencode.ai/zen/v1", "test")
+    assert isinstance(p, OpenCodeZenProvider)
+
+
+def test_factory_picks_groq():
+    from app.llm import get_provider
+    from app.llm.groq import GroqProvider
+    p = get_provider("https://api.groq.com/openai/v1", "test")
+    assert isinstance(p, GroqProvider)
