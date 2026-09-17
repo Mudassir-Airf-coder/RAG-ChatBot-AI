@@ -52,7 +52,7 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
 
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(generate_answer, chunks, request.question, provider, model),
+            generate_answer(chunks, request.question, provider, model),
             timeout=30,
         )
     except asyncio.TimeoutError:

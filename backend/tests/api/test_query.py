@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -48,7 +48,7 @@ def test_query_no_documents_returns_abstained(mock_retrieve, client):
     assert data["citations"] == []
 
 
-@patch("app.api.query.generate_answer")
+@patch("app.api.query.generate_answer", new_callable=AsyncMock)
 @patch("app.api.query.retrieve")
 def test_query_with_documents_returns_answer(mock_retrieve, mock_generate, client):
     mock_retrieve.return_value = [
