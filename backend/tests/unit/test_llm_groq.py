@@ -61,3 +61,14 @@ async def test_invalid_api_key_raises():
 
         with pytest.raises(ProviderError, match="Invalid API key"):
             await provider.get_models()
+
+
+def test_non_ascii_key_raises_clean_error():
+    from app.exceptions import ValidationError
+    with pytest.raises(ValidationError, match="API key contains invalid characters"):
+        GroqProvider("gsk_test_with_em_dash_\u2014")
+
+
+def test_ascii_key_works():
+    provider = GroqProvider("gsk_test_only_ascii")
+    assert provider.api_key == "gsk_test_only_ascii"

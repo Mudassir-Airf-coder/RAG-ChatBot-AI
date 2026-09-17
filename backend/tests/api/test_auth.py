@@ -33,3 +33,10 @@ def test_get_models_invalid_key(mock_get_provider):
     resp = client.post("/api/v1/auth/models", json={"provider": "groq", "api_key": "bad"})
     assert resp.status_code == 502
     assert resp.json()["error"]["code"] == "PROVIDER_ERROR"
+
+
+def test_non_ascii_key_returns_400():
+    client = TestClient(app)
+    resp = client.post("/api/v1/auth/models", json={"provider": "groq", "api_key": "gsk_test_with_em_dash_\u2014"})
+    assert resp.status_code == 400
+    assert "invalid characters" in resp.json()["error"]["message"]
