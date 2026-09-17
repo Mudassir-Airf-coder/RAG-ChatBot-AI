@@ -1,7 +1,9 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 
 from app.config import settings
 from app.exceptions import AppError
@@ -16,7 +18,17 @@ from app.api.chats import router as chats_router
 configure_logging(settings.log_level)
 logger = get_logger(__name__)
 
-app = FastAPI(title="RAG Chatbot", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
+    init_db(settings.sqlite_path)
+    logger.info("startup_complete")
+    yield
+    logger.info("shutdown")
+
+
+app = FastAPI(title="RAG Chatbot", version="0.1.0", lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(documents_router)
@@ -30,11 +42,6 @@ app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
     return JSONResponse(status_code=exc.status_code, content=exc.to_dict())
-
-
-@app.on_event("startup")
-async def startup():
-    init_db(settings.sqlite_path)
 
 
 @app.get("/api/v1/health")

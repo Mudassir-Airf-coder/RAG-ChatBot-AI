@@ -104,3 +104,20 @@ def test_get_messages_ordered(db):
     assert len(msgs) == 2
     assert msgs[0]["role"] == "user"
     assert msgs[1]["role"] == "assistant"
+
+
+def test_init_db_creates_parent_directory(tmp_path):
+    from app.storage import init_db
+    db_path = tmp_path / "nested" / "deep" / "test.db"
+    assert not db_path.parent.exists()
+    init_db(str(db_path))
+    assert db_path.parent.exists()
+    assert db_path.exists()
+
+
+def test_init_db_does_not_fail_on_existing_directory(tmp_path):
+    from app.storage import init_db
+    db_path = tmp_path / "test.db"
+    init_db(str(db_path))
+    init_db(str(db_path))
+    assert db_path.exists()
