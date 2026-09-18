@@ -32,13 +32,13 @@ class OpenCodeZenProvider(LLMProvider):
         except UnicodeEncodeError:
             raise ValidationError("API key contains invalid characters")
 
-    async def chat(self, model: str, messages: list[dict]) -> str:
+    async def chat(self, model: str, messages: list[dict], max_tokens: int = 400, temperature: float = 0.2) -> str:
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.post(
                     f"{settings.opencode_zen_base_url}/chat/completions",
                     headers=self.headers,
-                    json={"model": model, "messages": messages},
+                    json={"model": model, "messages": messages, "max_tokens": max_tokens, "temperature": temperature},
                     timeout=60,
                 )
                 if resp.status_code == 401:

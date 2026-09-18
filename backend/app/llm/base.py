@@ -11,5 +11,5 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    async def chat(self, model: str, messages: list[dict]) -> str:
+    async def chat(self, model: str, messages: list[dict], max_tokens: int = 400, temperature: float = 0.2) -> str:
         ...

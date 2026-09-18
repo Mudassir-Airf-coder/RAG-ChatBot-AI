@@ -621,7 +621,11 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
     try {
       const data = await uploadWithProgress(file, (loaded, total) => {
         const pct = Math.round((loaded / total) * 100);
-        statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' — ' + pct + '% (' + formatBytes(loaded) + ' / ' + formatBytes(total) + ')';
+        if (loaded < total) {
+          statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' — ' + pct + '% (' + formatBytes(loaded) + ' / ' + formatBytes(total) + ')';
+        } else {
+          statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) + ' — embedding document…';
+        }
       });
 
       const status = (data && data.status) || 'unknown';
