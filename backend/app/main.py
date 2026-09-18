@@ -27,6 +27,12 @@ async def lifespan(app: FastAPI):
     stale = mark_stale_processing_as_failed(settings.sqlite_path, max_age_seconds=300)
     if stale:
         logger.info("stale_docs_marked_failed", count=stale)
+
+    from app.rag.embedder import _get_model
+    logger.info("loading_embedding_model")
+    _get_model()
+    logger.info("embedding_model_ready")
+
     logger.info("startup_complete")
     yield
     logger.info("shutdown")
