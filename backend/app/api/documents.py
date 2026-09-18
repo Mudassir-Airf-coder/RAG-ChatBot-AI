@@ -1,4 +1,6 @@
+import json
 import shutil
+import traceback
 import uuid
 from pathlib import Path
 
@@ -22,6 +24,8 @@ from app.storage import (
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 logger = get_logger(__name__)
+
+MAX_CHUNKS_PER_DOC = settings.max_chunks_per_doc
 
 
 class DocumentResponse(BaseModel):
