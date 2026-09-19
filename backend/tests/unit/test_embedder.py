@@ -12,7 +12,7 @@ def test_embed_chunks_returns_correct_count(mock_get_model):
     result = embed_chunks(["a", "b", "c"])
 
     assert len(result) == 3
-    mock_model.embed.assert_called_once_with(["a", "b", "c"])
+    mock_model.embed.assert_called_once_with(["a", "b", "c"], batch_size=64, parallel=4)
 
 
 @patch("app.rag.embedder._get_model")
@@ -25,4 +25,4 @@ def test_embed_query_returns_vector(mock_get_model):
     result = embed_query("test query")
 
     assert result.shape == (384,)
-    mock_model.embed.assert_called_once_with(["test query"])
+    mock_model.embed.assert_called_once_with(["test query"], batch_size=1, parallel=1)

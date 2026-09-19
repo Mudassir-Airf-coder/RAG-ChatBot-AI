@@ -1,5 +1,6 @@
-import json
+import asyncio
 import shutil
+import time
 import traceback
 import uuid
 from pathlib import Path
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 logger = get_logger(__name__)
 
 MAX_CHUNKS_PER_DOC = settings.max_chunks_per_doc
+INGEST_TIMEOUT_SECONDS = 120
 
 
 class DocumentResponse(BaseModel):
@@ -44,6 +46,65 @@ class ChunkResponse(BaseModel):
     chunk_index: int
     text: str
     metadata: dict
+
+
+def _ingest_pipeline(doc_id: str, dest: str, safe_name: str) -> None:
+    """Synchronous ingestion pipeline executed in thread pool."""
+    t0 = time.perf_counter()
+    logger.info("parse_started", document_id=doc_id)
+    pages = parse_file(dest)
+    logger.info("parse_done", document_id=doc_id, pages=len(pages),
+                duration_ms=int((time.perf_counter() - t0) * 1000))
+
+    t1 = time.perf_counter()
+    all_chunks = []
+    for page in pages:
+        chunks = chunk_text(page["text"])
+        for c in chunks:
+            c["metadata"] = page.get("metadata", {})
+        all_chunks.extend(chunks)
+    logger.info("chunk_done", document_id=doc_id, chunk_count=len(all_chunks),
+                duration_ms=int((time.perf_counter() - t1) * 1000))
+
+    if len(all_chunks) > MAX_CHUNKS_PER_DOC:
+        logger.warning("ingestion_rejected_too_many_chunks",
+                       document_id=doc_id, chunk_count=len(all_chunks),
+                       limit=settings.max_chunks_per_doc)
+        update_document_status(
+            doc_id, "FAILED",
+            error_message=f"Document produces {len(all_chunks)} chunks, "
+                          f"exceeds limit of {settings.max_chunks_per_doc}. "
+                          f"Split the file or increase max_chunks_per_doc.",
+            sqlite_path=settings.sqlite_path,
+        )
+        raise ValidationError(
+            f"Document too large: {len(all_chunks)} chunks exceeds limit "
+            f"of {settings.max_chunks_per_doc}"
+        )
+
+    t2 = time.perf_counter()
+    logger.info("embed_started", document_id=doc_id, chunk_count=len(all_chunks))
+    texts = [c["text"] for c in all_chunks]
+    # Embed with progress logging
+    batch = 64
+    embeddings = []
+    for i in range(0, len(texts), batch):
+        batch_texts = texts[i:i+batch]
+        batch_embeddings = embed_chunks(batch_texts)
+        embeddings.extend(batch_embeddings)
+        logger.info("embed_progress", document_id=doc_id,
+                    done=min(i+batch, len(texts)),
+                    total=len(texts))
+    logger.info("embed_done", document_id=doc_id,
+                duration_ms=int((time.perf_counter() - t2) * 1000))
+
+    t3 = time.perf_counter()
+    create_collection()
+    upsert_chunks(None, doc_id, all_chunks, embeddings)
+    logger.info("index_done", document_id=doc_id,
+                duration_ms=int((time.perf_counter() - t3) * 1000))
+
+    update_document_status(doc_id, "READY", sqlite_path=settings.sqlite_path)
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=201)
@@ -77,23 +138,22 @@ async def upload_document(file: UploadFile = File(...)) -> DocumentResponse:
     doc = create_document(doc_id, safe_name, status="PROCESSING", sqlite_path=settings.sqlite_path)
 
     try:
-        pages = parse_file(str(dest))
-        all_chunks = []
-        for page in pages:
-            chunks = chunk_text(page["text"])
-            for c in chunks:
-                c["metadata"] = page.get("metadata", {})
-            all_chunks.extend(chunks)
-
-        if all_chunks:
-            texts = [c["text"] for c in all_chunks]
-            embeddings = embed_chunks(texts)
-            create_collection()
-            upsert_chunks(None, doc_id, all_chunks, embeddings)
-
-        update_document_status(doc_id, "READY", sqlite_path=settings.sqlite_path)
-    except Exception as e:
-        update_document_status(doc_id, "FAILED", error_message=str(e), sqlite_path=settings.sqlite_path)
+        await asyncio.wait_for(
+            asyncio.to_thread(_ingest_pipeline, doc_id, str(dest), safe_name),
+            timeout=INGEST_TIMEOUT_SECONDS
+        )
+    except asyncio.TimeoutError:
+        logger.error("ingestion_timeout", document_id=doc_id,
+                     timeout_seconds=INGEST_TIMEOUT_SECONDS)
+        update_document_status(doc_id, "FAILED",
+                               error_message=f"Ingestion timed out after {INGEST_TIMEOUT_SECONDS}s",
+                               sqlite_path=settings.sqlite_path)
+        raise ValidationError(f"Ingestion timed out after {INGEST_TIMEOUT_SECONDS} seconds")
+    except Exception:
+        logger.exception("ingestion_failed", document_id=doc_id, filename=safe_name)
+        update_document_status(doc_id, "FAILED", error_message="Ingestion failed",
+                               sqlite_path=settings.sqlite_path)
+        raise
 
     return DocumentResponse(id=doc_id, filename=safe_name, status=get_document(doc_id, settings.sqlite_path)["status"])
 
