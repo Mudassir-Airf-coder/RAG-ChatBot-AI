@@ -640,8 +640,11 @@ async function loadDocuments() {
       del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
 
       let confirming = false;
+      let deleting = false;
       del.addEventListener('click', async (e) => {
         e.stopPropagation();
+        e.preventDefault();
+        if (deleting) return;
         if (!confirming) {
           confirming = true;
           del.classList.add('confirming');
@@ -653,6 +656,7 @@ async function loadDocuments() {
           }, 3000);
           return;
         }
+        deleting = true;
         try {
           const r = await fetch(API + '/documents/' + encodeURIComponent(doc.id), { method: 'DELETE' });
           if (!r.ok) throw new Error('Delete failed');
@@ -660,6 +664,8 @@ async function loadDocuments() {
           loadDocuments();
         } catch (err) {
           showToast('Could not delete: ' + err.message, 'error');
+        } finally {
+          deleting = false;
         }
       });
 
