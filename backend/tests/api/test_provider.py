@@ -100,6 +100,7 @@ def test_config_sets_cookie(client):
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "gsk_test",
         "model": "llama-3.1-8b-instant",
+        "cohere_api_key": "sk-test-cohere",
     })
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
@@ -112,11 +113,13 @@ def test_config_stores_session(client):
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "gsk_test",
         "model": "llama-3.1-8b-instant",
+        "cohere_api_key": "sk-test-cohere",
     })
     cookie = resp.cookies.get("rag_session")
     assert cookie is not None
     assert cookie in sessions
     assert sessions[cookie]["model"] == "llama-3.1-8b-instant"
+    assert sessions[cookie]["cohere_api_key"] == "sk-test-cohere"
 
 
 def test_get_models_old_method_returns_404(client):
@@ -154,25 +157,85 @@ def test_factory_picks_groq():
 
 def test_config_persists_across_reload(tmp_path, monkeypatch):
     from app.api import provider
-    monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
-    provider.sessions = {}
-    client = TestClient(app)
-    client.post("/api/v1/provider/config", json={
-        "name": "Groq",
-        "base_url": "https://api.groq.com/openai/v1",
-        "api_key": "test",
-        "model": "llama-3.1-8b-instant",
-    })
-    reloaded = provider._load_sessions()
-    assert len(reloaded) == 1
-    assert list(reloaded.values())[0]["model"] == "llama-3.1-8b-instant"
+    original_sessions_file = provider.SESSIONS_FILE
+    original_sessions = provider.sessions
+    
+    try:
+        monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
+        provider.sessions = {}
+        client = TestClient(app)
+        client.post("/api/v1/provider/config", json={
+            "name": "Groq",
+            "base_url": "https://api.groq.com/openai/v1",
+            "api_key": "test",
+            "model": "llama-3.1-8b-instant",
+            "cohere_api_key": "sk-test-cohere",
+        })
+        reloaded = provider._load_sessions()
+        assert len(reloaded) == 1
+        assert list(reloaded.values())[0]["model"] == "llama-3.1-8b-instant"
+    finally:
+        provider.SESSIONS_FILE = original_sessions_file
+        provider.sessions = original_sessions
 
 
 def test_config_sets_cookie_after_persist(tmp_path, monkeypatch):
     from app.api import provider
-    monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
-    provider.sessions = {}
-    client = TestClient(app)
+    original_sessions_file = provider.SESSIONS_FILE
+    original_sessions = provider.sessions
+    
+    try:
+        monkeypatch.setattr(provider, "SESSIONS_FILE", tmp_path / "sessions.json")
+        provider.sessions = {}
+        client = TestClient(app)
+        resp = client.post("/api/v1/provider/config", json={
+            "name": "Groq",
+            "base_url": "https://api.groq.com/openai/v1",
+            "api_key": "gsk_test",
+            "model": "llama-3.1-8b-instant",
+            "cohere_api_key": "sk-test-cohere",
+        })
+        assert resp.status_code == 200
+        assert "rag_session" in resp.cookies
+        reloaded = provider._load_sessions()
+        assert len(reloaded) == 1
+    finally:
+        provider.SESSIONS_FILE = original_sessions_file
+        provider.sessions = original_sessions
+
+
+@patch("app.embeddings.cohere_cloud.httpx.post")
+def test_test_cohere_success(mock_post, client):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"embeddings": [[0.1] * 1024]}
+    mock_post.return_value = mock_resp
+
+    resp = client.post("/api/v1/provider/test/cohere", json={
+        "base_url": "",
+        "api_key": "sk-test-cohere",
+        "model": "embed-english-v3.0",
+    })
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+
+@patch("app.embeddings.cohere_cloud.httpx.post")
+def test_test_cohere_failure(mock_post, client):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 401
+    mock_post.return_value = mock_resp
+
+    resp = client.post("/api/v1/provider/test/cohere", json={
+        "base_url": "",
+        "api_key": "bad-key",
+        "model": "embed-english-v3.0",
+    })
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is False
+
+
+def test_config_with_only_llm_fields(client):
     resp = client.post("/api/v1/provider/config", json={
         "name": "Groq",
         "base_url": "https://api.groq.com/openai/v1",
@@ -180,6 +243,43 @@ def test_config_sets_cookie_after_persist(tmp_path, monkeypatch):
         "model": "llama-3.1-8b-instant",
     })
     assert resp.status_code == 200
+    assert resp.json()["ok"] is True
     assert "rag_session" in resp.cookies
-    reloaded = provider._load_sessions()
-    assert len(reloaded) == 1
+    cookie = resp.cookies.get("rag_session")
+    assert cookie in sessions
+    assert sessions[cookie]["model"] == "llama-3.1-8b-instant"
+    assert sessions[cookie]["cohere_api_key"] == ""
+
+
+def test_config_with_only_cohere_key_returns_400(client):
+    resp = client.post("/api/v1/provider/config", json={
+        "cohere_api_key": "sk-test-cohere",
+    })
+    assert resp.status_code == 400
+    assert "LLM fields are required" in resp.json()["error"]["message"]
+
+
+def test_config_merges_partial_saves(client):
+    # First save LLM only
+    resp1 = client.post("/api/v1/provider/config", json={
+        "name": "Groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": "gsk_test",
+        "model": "llama-3.1-8b-instant",
+    })
+    assert resp1.status_code == 200
+    cookie = resp1.cookies.get("rag_session")
+    assert cookie in sessions
+    assert sessions[cookie]["model"] == "llama-3.1-8b-instant"
+    assert sessions[cookie]["cohere_api_key"] == ""
+
+    # Then save Cohere only (using the same cookie)
+    client.cookies.set("rag_session", cookie)
+    resp2 = client.post("/api/v1/provider/config", json={
+        "cohere_api_key": "sk-test-cohere",
+    })
+    assert resp2.status_code == 200
+    assert resp2.json()["ok"] is True
+    assert resp2.json()["cohere_configured"] is True
+    assert sessions[cookie]["model"] == "llama-3.1-8b-instant"
+    assert sessions[cookie]["cohere_api_key"] == "sk-test-cohere"

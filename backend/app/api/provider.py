@@ -3,11 +3,12 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, Request
 from pydantic import BaseModel
 
 from app.exceptions import ValidationError
 from app.llm import get_provider
+from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 
 router = APIRouter(prefix="/api/v1/provider", tags=["provider"])
 
@@ -35,6 +36,13 @@ def _save_sessions(s: dict) -> None:
 sessions: dict[str, dict] = _load_sessions()
 
 
+def get_session_config(req) -> dict | None:
+    session_id = req.cookies.get("rag_session")
+    if not session_id:
+        return None
+    return sessions.get(session_id)
+
+
 class ModelsRequest(BaseModel):
     base_url: str
     api_key: str
@@ -47,10 +55,11 @@ class TestRequest(BaseModel):
 
 
 class ConfigRequest(BaseModel):
-    name: str
-    base_url: str
-    api_key: str
-    model: str
+    name: str | None = None
+    base_url: str | None = None
+    api_key: str | None = None
+    model: str | None = None
+    cohere_api_key: str | None = None
 
 
 @router.post("/models")
@@ -73,23 +82,41 @@ async def test_connection(request: TestRequest) -> dict:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/config")
-async def save_config(request: ConfigRequest, response: Response) -> dict:
-    if not request.name or not request.base_url or not request.api_key or not request.model:
-        raise ValidationError("All fields are required")
+@router.post("/test/cohere")
+async def test_cohere(request: TestRequest) -> dict:
+    try:
+        embedder = CohereEmbeddingProvider(request.api_key)
+        embedder.embed_query("test")
+        return {"ok": True, "message": "Cohere connection successful"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
-    session_id = uuid.uuid4().hex
-    sessions[session_id] = {
-        "name": request.name,
-        "base_url": request.base_url,
-        "api_key": request.api_key,
-        "model": request.model,
+
+@router.post("/config")
+async def save_config(request: ConfigRequest, response: Response, req: Request) -> dict:
+    existing_id = req.cookies.get("rag_session")
+    session_id = existing_id if existing_id and existing_id in sessions else uuid.uuid4().hex
+
+    existing = sessions.get(session_id, {})
+    merged = {
+        "name": request.name or existing.get("name", ""),
+        "base_url": request.base_url or existing.get("base_url", ""),
+        "api_key": request.api_key or existing.get("api_key", ""),
+        "model": request.model or existing.get("model", ""),
+        "cohere_api_key": request.cohere_api_key or existing.get("cohere_api_key", ""),
     }
+
+    # Validate LLM fields are present (either in request or existing session)
+    if not merged["name"] or not merged["base_url"] or not merged["api_key"] or not merged["model"]:
+        raise ValidationError("LLM fields are required")
+
+    sessions[session_id] = merged
     _save_sessions(sessions)
+
     response.set_cookie(
         key="rag_session",
         value=session_id,
         httponly=True,
         samesite="lax",
     )
-    return {"ok": True}
+    return {"ok": True, "cohere_configured": bool(merged["cohere_api_key"])}

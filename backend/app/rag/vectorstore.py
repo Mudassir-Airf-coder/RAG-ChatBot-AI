@@ -20,26 +20,24 @@ def _get_client() -> QdrantClient:
     return QdrantClient(url=settings.qdrant_url)
 
 
-def create_collection(collection_name: str | None = None) -> None:
-    name = collection_name or settings.qdrant_collection
+def create_collection(dimension: int, collection_name: str) -> None:
     client = _get_client()
     collections = client.get_collections().collections
     existing = [c.name for c in collections]
 
-    if name not in existing:
+    if collection_name not in existing:
         client.create_collection(
-            collection_name=name,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+            collection_name=collection_name,
+            vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
         )
 
 
 def upsert_chunks(
-    collection_name: str | None,
+    collection_name: str,
     document_id: str,
     chunks: list[dict],
-    embeddings: list[ndarray],
+    embeddings: list,
 ) -> None:
-    name = collection_name or settings.qdrant_collection
     client = _get_client()
     points = []
 
@@ -60,14 +58,13 @@ def upsert_chunks(
             )
         )
 
-    client.upsert(collection_name=name, points=points)
+    client.upsert(collection_name=collection_name, points=points)
 
 
-def delete_by_document_id(document_id: str, collection_name: str | None = None) -> None:
-    name = collection_name or settings.qdrant_collection
+def delete_by_document_id(document_id: str, collection_name: str) -> None:
     client = _get_client()
     client.delete(
-        collection_name=name,
+        collection_name=collection_name,
         points_selector=Filter(
             must=[
                 FieldCondition(

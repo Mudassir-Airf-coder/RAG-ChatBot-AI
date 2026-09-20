@@ -1,7 +1,12 @@
+from app.config import settings
 from app.exceptions import ValidationError
 
 
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
+def chunk_text(
+    text: str,
+    chunk_size: int = settings.chunk_size,
+    overlap: int = settings.chunk_overlap,
+) -> list[dict]:
     if not text:
         return []
     if chunk_size <= 0:

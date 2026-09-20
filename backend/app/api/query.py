@@ -5,9 +5,10 @@ from pydantic import BaseModel
 
 from app.exceptions import ValidationError, ProviderError
 from app.llm import get_provider
+from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.rag.retriever import retrieve
 from app.rag.generator import generate_answer
-from app.api.provider import sessions
+from app.api.provider import get_session_config
 
 router = APIRouter(prefix="/api/v1", tags=["query"])
 
@@ -33,15 +34,24 @@ class QueryResponse(BaseModel):
 
 @router.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest, req: Request) -> QueryResponse:
-    session_id = req.cookies.get("rag_session")
-    if not session_id or session_id not in sessions:
-        raise ValidationError("No provider configured. Save provider settings first.")
+    session = get_session_config(req)
+    if not session or session.get("cohere_api_key") is None:
+        raise ValidationError("Configure Cohere API key first in the Embedding Provider section")
 
-    config = sessions[session_id]
-    provider = get_provider(config["base_url"], config["api_key"])
-    model = config["model"]
+    cohere_key = session["cohere_api_key"]
+    llm_config = {
+        "base_url": session.get("base_url"),
+        "api_key": session.get("api_key"),
+        "model": session.get("model"),
+    }
+    if not llm_config["base_url"] or not llm_config["api_key"] or not llm_config["model"]:
+        raise ValidationError("Configure LLM provider first (Groq or OpenCode Zen)")
 
-    chunks = retrieve(request.question, top_k=5)
+    provider = get_provider(llm_config["base_url"], llm_config["api_key"])
+    model = llm_config["model"]
+    embedder = CohereEmbeddingProvider(cohere_key)
+
+    chunks = retrieve(request.question, top_k=5, embedder=embedder)
     if not chunks:
         return QueryResponse(
             answer="I could not find any relevant information in the uploaded documents.",

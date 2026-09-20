@@ -1,21 +1,24 @@
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 from app.config import settings
-from app.rag.embedder import embed_query
 from app.rag.vectorstore import _get_client
 
 
 def retrieve(
     query: str,
     top_k: int = 5,
-    collection_name: str | None = None,
+    collection_name: str = "rag_chatbot_cohere",
+    embedder=None,
 ) -> list[dict]:
-    name = collection_name or settings.qdrant_collection
     client = _get_client()
-    query_vector = embed_query(query)
+    if embedder is None:
+        from app.embeddings.cohere_cloud import CohereEmbeddingProvider
+        # This should not happen in production, but provides a fallback for testing
+        raise ValueError("Embedder must be provided")
+    query_vector = embedder.embed_query(query)
 
     results = client.query_points(
-        collection_name=name,
+        collection_name=collection_name,
         query=query_vector.tolist(),
         limit=top_k,
         with_payload=True,

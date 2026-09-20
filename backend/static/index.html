@@ -95,6 +95,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .modal-header h3{font-size:16px}
 pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-size:13px;white-space:pre-wrap;overflow-x:auto}
+
+.provider-section{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;background:var(--surface2)}
+.provider-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.provider-section-title{font-size:13px;font-weight:600;color:var(--accent2)}
+.provider-section-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+.divider{height:1px;background:var(--border);margin:16px 0}
 </style>
 </head>
 <body>
@@ -138,37 +144,62 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
   </div>
 
   <div class="config-panel">
-    <h3>Provider Settings <span class="badge badge-uploaded" id="cfg-badge">Not saved</span></h3>
-    <div class="field">
-      <label>Provider</label>
-      <select id="cfg-provider">
-        <option value="groq">Groq</option>
-        <option value="opencode">OpenCode Zen</option>
-        <option value="custom">Custom</option>
-      </select>
+    <!-- LLM Provider Section -->
+    <div class="provider-section" id="llm-section">
+      <div class="provider-section-header">
+        <span class="provider-section-title">LLM Provider</span>
+        <span class="provider-section-badge badge-uploaded" id="llm-badge">Not saved</span>
+      </div>
+      <div class="field">
+        <label>Provider</label>
+        <select id="cfg-provider">
+          <option value="groq">Groq</option>
+          <option value="opencode">OpenCode Zen</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Provider Name</label>
+        <input id="cfg-name" value="Groq" placeholder="Groq">
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input id="cfg-url" value="https://api.groq.com/openai/v1" placeholder="https://api.groq.com/openai/v1">
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <input id="cfg-key" type="password" placeholder="gsk_...">
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <select id="cfg-model"><option value="">Fetch models first</option></select>
+      </div>
+      <div class="config-actions">
+        <button class="btn btn-sm" id="fetch-models-btn">Fetch Models</button>
+        <button class="btn btn-sm btn-outline" id="test-btn">Test</button>
+        <button class="btn btn-sm" id="save-llm-btn">Save</button>
+      </div>
+      <div id="llm-config-status"></div>
     </div>
-    <div class="field">
-      <label>Provider Name</label>
-      <input id="cfg-name" value="Groq" placeholder="Groq">
+
+    <div class="divider"></div>
+
+    <!-- Embedding Provider Section (Cohere) -->
+    <div class="provider-section" id="embedding-section">
+      <div class="provider-section-header">
+        <span class="provider-section-title">Embedding Provider (Cohere)</span>
+        <span class="provider-section-badge badge-uploaded" id="embedding-badge">Not saved</span>
+      </div>
+      <div class="field">
+        <label>Cohere API Key</label>
+        <input id="cfg-cohere-key" type="password" placeholder="sk-...">
+      </div>
+      <div class="config-actions">
+        <button class="btn btn-sm btn-outline" id="test-cohere-btn">Test Connection</button>
+        <button class="btn btn-sm" id="save-embedding-btn">Save</button>
+      </div>
+      <div id="embedding-config-status"></div>
     </div>
-    <div class="field">
-      <label>Base URL</label>
-      <input id="cfg-url" value="https://api.groq.com/openai/v1" placeholder="https://api.groq.com/openai/v1">
-    </div>
-    <div class="field">
-      <label>API Key</label>
-      <input id="cfg-key" type="password" placeholder="gsk_...">
-    </div>
-    <div class="field">
-      <label>Model</label>
-      <select id="cfg-model"><option value="">Fetch models first</option></select>
-    </div>
-    <div class="config-actions">
-      <button class="btn btn-sm" id="fetch-models-btn">Fetch Models</button>
-      <button class="btn btn-sm btn-outline" id="test-btn">Test</button>
-      <button class="btn btn-sm" id="save-btn">Save</button>
-    </div>
-    <div id="config-status"></div>
   </div>
 </div>
 
@@ -192,7 +223,9 @@ const cfgUrl = document.getElementById('cfg-url');
 const cfgKey = document.getElementById('cfg-key');
 const cfgModel = document.getElementById('cfg-model');
 const providerSelect = document.getElementById('cfg-provider');
-const configStatus = document.getElementById('config-status');
+const llmConfigStatus = document.getElementById('llm-config-status');
+const embeddingConfigStatus = document.getElementById('embedding-config-status');
+const cfgCohereKey = document.getElementById('cfg-cohere-key');
 
 // === Panel toggles ===
 function updateCollapseState() {
@@ -310,7 +343,10 @@ async function sendMessage() {
 
   const saved = sessionStorage.getItem('rag_config');
   if (!saved) {
-    showToast('Configure and save a provider first.', 'error');
+    showToast('Configure a provider first. Opening panel.', 'info');
+    layout.classList.remove('panels-collapsed-right');
+    updateCollapseState();
+    document.getElementById('cfg-key').focus();
     return;
   }
 
@@ -400,19 +436,20 @@ function restoreProviderSelection() {
 }
 
 // === Provider config ===
-function updateProviderStatus(saved) {
-  const b = document.getElementById('cfg-badge');
-  b.className = 'badge ' + (saved ? 'badge-ready' : 'badge-uploaded');
+function updateProviderStatus(saved, isLLM) {
+  const badgeId = isLLM ? 'llm-badge' : 'embedding-badge';
+  const b = document.getElementById(badgeId);
+  b.className = 'provider-section-badge ' + (saved ? 'badge-ready' : 'badge-uploaded');
   b.textContent = saved ? 'Saved' : 'Not saved';
 }
 
-async function saveProviderConfig(showToastOnSuccess) {
+async function saveLLMConfig(showToastOnSuccess) {
   const name = cfgName.value.trim();
   const url = cfgUrl.value.trim();
   const key = cfgKey.value.trim();
   const model = cfgModel.value;
   if (!name || !url || !key || !model) {
-    throw new Error('Fill all fields first');
+    throw new Error('Fill all LLM fields first');
   }
   const res = await fetch(API + '/provider/config', {
     method: 'POST',
@@ -422,8 +459,26 @@ async function saveProviderConfig(showToastOnSuccess) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
   sessionStorage.setItem('rag_config', JSON.stringify({ name, base_url: url, api_key: key, model }));
-  updateProviderStatus(true);
-  if (showToastOnSuccess) showToast('Configuration saved', 'success');
+  updateProviderStatus(true, true);
+  if (showToastOnSuccess) showToast('LLM configuration saved', 'success');
+  return true;
+}
+
+async function saveCohereConfig(showToastOnSuccess) {
+  const key = cfgCohereKey.value.trim();
+  if (!key) {
+    throw new Error('Enter Cohere API key');
+  }
+  const res = await fetch(API + '/provider/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ cohere_api_key: key })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
+  sessionStorage.setItem('rag_cohere_key', key);
+  updateProviderStatus(true, false);
+  if (showToastOnSuccess) showToast('Cohere configuration saved', 'success');
   return true;
 }
 
@@ -458,12 +513,11 @@ document.getElementById('test-btn').addEventListener('click', async () => {
   const url = cfgUrl.value.trim();
   const key = cfgKey.value.trim();
   const model = cfgModel.value;
-  if (!url || !key || !model) { showToast('Fill all fields', 'error'); return; }
+  if (!url || !key || !model) { showToast('Fill all LLM fields', 'error'); return; }
 
-  const el = document.getElementById('config-status');
-  el.className = 'status-msg';
-  el.textContent = 'Testing...';
-  el.style.display = 'block';
+  llmConfigStatus.className = 'status-msg';
+  llmConfigStatus.textContent = 'Testing...';
+  llmConfigStatus.style.display = 'block';
 
   try {
     const res = await fetch(API + '/provider/test', {
@@ -473,24 +527,61 @@ document.getElementById('test-btn').addEventListener('click', async () => {
     });
     const data = await res.json();
     if (data.ok) {
-      await saveProviderConfig(false);
-      el.className = 'status-msg status-ok';
-      el.textContent = 'Connection successful. Configuration saved.';
+      await saveLLMConfig(false);
+      llmConfigStatus.className = 'status-msg status-ok';
+      llmConfigStatus.textContent = 'Connection successful. Configuration saved.';
     } else {
-      el.className = 'status-msg status-err';
-      el.textContent = data.error;
+      llmConfigStatus.className = 'status-msg status-err';
+      llmConfigStatus.textContent = data.error;
     }
   } catch (err) {
-    el.className = 'status-msg status-err';
-    el.textContent = err.message;
+    llmConfigStatus.className = 'status-msg status-err';
+    llmConfigStatus.textContent = err.message;
   }
 });
 
-document.getElementById('save-btn').addEventListener('click', async () => {
+document.getElementById('test-cohere-btn').addEventListener('click', async () => {
+  const key = cfgCohereKey.value.trim();
+  if (!key) { showToast('Enter Cohere API key', 'error'); return; }
+
+  embeddingConfigStatus.className = 'status-msg';
+  embeddingConfigStatus.textContent = 'Testing...';
+  embeddingConfigStatus.style.display = 'block';
+
   try {
-    await saveProviderConfig(true);
+    const res = await fetch(API + '/provider/test/cohere', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base_url: '', api_key: key, model: 'embed-english-v3.0' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      await saveCohereConfig(false);
+      embeddingConfigStatus.className = 'status-msg status-ok';
+      embeddingConfigStatus.textContent = 'Cohere connection successful. Configuration saved.';
+    } else {
+      embeddingConfigStatus.className = 'status-msg status-err';
+      embeddingConfigStatus.textContent = data.error;
+    }
   } catch (err) {
-    showToast('Failed to save: ' + err.message, 'error');
+    embeddingConfigStatus.className = 'status-msg status-err';
+    embeddingConfigStatus.textContent = err.message;
+  }
+});
+
+document.getElementById('save-llm-btn').addEventListener('click', async () => {
+  try {
+    await saveLLMConfig(true);
+  } catch (err) {
+    showToast('Failed to save LLM: ' + err.message, 'error');
+  }
+});
+
+document.getElementById('save-embedding-btn').addEventListener('click', async () => {
+  try {
+    await saveCohereConfig(true);
+  } catch (err) {
+    showToast('Failed to save Cohere: ' + err.message, 'error');
   }
 });
 
@@ -503,14 +594,23 @@ document.getElementById('save-btn').addEventListener('click', async () => {
       cfgName.value = c.name || '';
       cfgUrl.value = c.base_url || '';
       cfgKey.value = c.api_key || '';
-      updateProviderStatus(true);
+      updateProviderStatus(true, true);
     } catch {
-      updateProviderStatus(false);
+      updateProviderStatus(false, true);
     }
   } else {
-    updateProviderStatus(false);
+    updateProviderStatus(false, true);
   }
   restoreProviderSelection();
+
+  // Load Cohere key from sessionStorage
+  const savedCohere = sessionStorage.getItem('rag_cohere_key');
+  if (savedCohere) {
+    cfgCohereKey.value = savedCohere;
+    updateProviderStatus(true, false);
+  } else {
+    updateProviderStatus(false, false);
+  }
 })();
 
 // === Documents with delete button ===
@@ -600,8 +700,8 @@ function uploadWithProgress(file, onProgress) {
     };
 
     xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out'));
-    xhr.timeout = 0;
+    xhr.ontimeout = () => reject(new Error('Upload timed out after 5 minutes'));
+    xhr.timeout = 300000;  // 5 minutes
 
     xhr.send(formData);
   });
@@ -624,7 +724,7 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
         if (loaded < total) {
           statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' — ' + pct + '% (' + formatBytes(loaded) + ' / ' + formatBytes(total) + ')';
         } else {
-          statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) + ' — embedding document…';
+          statusEl.innerHTML = '<span class="spinner"></span> Queued for processing. This may take 2-5 minutes…';
         }
       });
 
@@ -633,9 +733,46 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
         throw new Error((data && data.error_message) || 'Backend returned FAILED status');
       }
 
-      statusEl.className = 'upload-status success';
-      statusEl.textContent = 'Uploaded: ' + file.name + ' (' + status + ')';
-      showToast('Uploaded: ' + file.name, 'success');
+      if (status.toUpperCase() === 'UPLOADED') {
+        // Poll until READY or FAILED, max 5 minutes (100 attempts × 3s)
+        let attempts = 0;
+        while (attempts < 100) {
+          await new Promise(r => setTimeout(r, 3000));
+          const r = await fetch(API + '/documents/' + encodeURIComponent(data.id));
+          if (!r.ok) break;
+          const doc = await r.json();
+          if (doc.status === 'READY') {
+            statusEl.className = 'upload-status success';
+            statusEl.textContent = 'Indexed: ' + file.name + ' (' + (doc.chunk_count || '?') + ' chunks)';
+            showToast('Indexed: ' + file.name, 'success');
+            break;
+          }
+          if (doc.status === 'FAILED') {
+            statusEl.className = 'upload-status error';
+            statusEl.textContent = 'Failed: ' + file.name + ' — ' + (doc.error_message || 'processing error');
+            showToast('Failed: ' + file.name + ' — ' + (doc.error_message || 'processing error'), 'error');
+            break;
+          }
+          // Show progress with chunk count and ETA
+          const totalChunks = doc.chunk_count || 0;
+          if (totalChunks > 0 && doc.status === 'PROCESSING') {
+            const elapsed = attempts * 3;
+            const eta = Math.max(0, Math.round((totalChunks / Math.max(1, attempts)) * 3 - elapsed));
+            statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) +
+              ' — ' + totalChunks + ' chunks, ~' + eta + 's remaining…';
+          }
+          attempts++;
+        }
+        if (attempts >= 100) {
+          statusEl.className = 'upload-status error';
+          statusEl.textContent = 'Timed out: ' + file.name + ' — check server log';
+          showToast('Upload timed out: ' + file.name, 'error');
+        }
+      } else {
+        statusEl.className = 'upload-status success';
+        statusEl.textContent = 'Uploaded: ' + file.name + ' (' + status + ')';
+        showToast('Uploaded: ' + file.name, 'success');
+      }
     } catch (err) {
       console.error('[rag] upload error', err);
       statusEl.className = 'upload-status error';

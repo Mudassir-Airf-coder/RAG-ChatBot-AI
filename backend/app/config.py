@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     groq_base_url: str = "https://api.groq.com/openai/v1"
     opencode_zen_base_url: str = "https://opencode.ai/zen/v1"
     max_upload_mb: int = 2048
-    max_chunks_per_doc: int = 500
-    max_chunks_per_doc: int = 2000
+    max_chunks_per_doc: int = 150
+    chunk_size: int = 1500
+    chunk_overlap: int = 150
     max_tokens_concise: int = 400
     max_tokens_verbose: int = 1500
     default_temperature: float = 0.2
