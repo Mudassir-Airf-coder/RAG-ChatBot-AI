@@ -9,4 +9,8 @@ build/
 .env
 backend/data/
 backend/uploads/
-*.db
+backend/fastembed_cache/
+backend/.coverage
+backend/debug_*.py
+seedream-*.jpeg
+*.lock
