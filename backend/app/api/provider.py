@@ -106,9 +106,15 @@ async def save_config(request: ConfigRequest, response: Response, req: Request) 
         "cohere_api_key": request.cohere_api_key or existing.get("cohere_api_key", ""),
     }
 
-    # Validate LLM fields are present (either in request or existing session)
-    if not merged["name"] or not merged["base_url"] or not merged["api_key"] or not merged["model"]:
-        raise ValidationError("LLM fields are required")
+    # At least one config must be complete
+    llm_configured = all([merged["name"], merged["base_url"],
+                          merged["api_key"], merged["model"]])
+    cohere_configured = bool(merged["cohere_api_key"])
+
+    if not llm_configured and not cohere_configured:
+        raise ValidationError(
+            "Nothing to save. Provide LLM fields or Cohere key."
+        )
 
     sessions[session_id] = merged
     _save_sessions(sessions)
@@ -119,4 +125,8 @@ async def save_config(request: ConfigRequest, response: Response, req: Request) 
         httponly=True,
         samesite="lax",
     )
-    return {"ok": True, "cohere_configured": bool(merged["cohere_api_key"])}
+    return {
+        "ok": True,
+        "llm_configured": llm_configured,
+        "cohere_configured": cohere_configured,
+    }

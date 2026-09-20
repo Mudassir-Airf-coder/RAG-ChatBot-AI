@@ -251,12 +251,18 @@ def test_config_with_only_llm_fields(client):
     assert sessions[cookie]["cohere_api_key"] == ""
 
 
-def test_config_with_only_cohere_key_returns_400(client):
+def test_config_with_only_cohere_key_succeeds(client):
     resp = client.post("/api/v1/provider/config", json={
         "cohere_api_key": "sk-test-cohere",
     })
-    assert resp.status_code == 400
-    assert "LLM fields are required" in resp.json()["error"]["message"]
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["ok"] is True
+    assert data["llm_configured"] is False
+    assert data["cohere_configured"] is True
+    cookie = resp.cookies.get("rag_session")
+    assert cookie in sessions
+    assert sessions[cookie]["cohere_api_key"] == "sk-test-cohere"
 
 
 def test_config_merges_partial_saves(client):

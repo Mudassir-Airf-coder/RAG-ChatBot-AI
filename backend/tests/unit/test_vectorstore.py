@@ -35,7 +35,7 @@ def test_delete_by_document_id(mock_get_client):
     mock_client = MagicMock()
     mock_get_client.return_value = mock_client
 
-    delete_by_document_id("doc_001", "test_col")
+    delete_by_document_id("test_col", "doc_001")
 
     mock_client.delete.assert_called_once()
     call_args = mock_client.delete.call_args

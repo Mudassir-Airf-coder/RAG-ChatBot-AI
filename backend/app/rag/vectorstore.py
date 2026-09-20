@@ -61,7 +61,7 @@ def upsert_chunks(
     client.upsert(collection_name=collection_name, points=points)
 
 
-def delete_by_document_id(document_id: str, collection_name: str) -> None:
+def delete_by_document_id(collection_name: str, document_id: str) -> None:
     client = _get_client()
     client.delete(
         collection_name=collection_name,
