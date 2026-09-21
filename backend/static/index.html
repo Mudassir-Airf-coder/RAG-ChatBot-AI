@@ -14,14 +14,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .layout.panels-collapsed-right{grid-template-columns:280px 1fr 0}
 .layout.panels-collapsed-both{grid-template-columns:0 1fr 0}
 
-.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;overflow:hidden;transition:opacity .25s ease,transform .25s ease}
-.layout.panels-collapsed-left .sidebar{opacity:0;pointer-events:none;transform:translateX(-100%);width:0;padding:0;border:0}
-.config-panel{background:var(--surface);border-left:1px solid var(--border);padding:16px;overflow-y:auto;overflow:hidden;transition:opacity .25s ease,transform .25s ease}
-.layout.panels-collapsed-right .config-panel{opacity:0;pointer-events:none;transform:translateX(100%);width:0;padding:0;border:0}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;overflow:hidden}
+.layout.panels-collapsed-left .sidebar{opacity:0;pointer-events:none;width:0;padding:0;border:0}
+.config-panel{background:var(--surface);border-left:1px solid var(--border);padding:16px;overflow-y:auto}
+.layout.panels-collapsed-right .config-panel{opacity:0;pointer-events:none;width:0;padding:0;border:0}
 
-.sidebar h2{font-size:18px;margin-bottom:16px;color:var(--accent2)}
 .btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500}
 .btn:hover{opacity:.85}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-sm{padding:6px 10px;font-size:12px}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
 .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
@@ -30,49 +30,67 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .header-brand{display:flex;align-items:center;gap:10px}
 .brand-logo{width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none}
 .header-title{font-size:15px;color:var(--accent2)}
+.header-subtitle{font-size:12px;color:var(--text2);margin-left:8px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .header-actions{display:flex;gap:6px}
 .header-icon-btn{background:transparent;border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:var(--radius);cursor:pointer;display:grid;place-items:center;transition:background .15s,color .15s}
 .header-icon-btn:hover{background:var(--surface2);color:var(--accent)}
 .header-icon-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 .section-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin:16px 0 8px}
+.sidebar-section{margin-bottom:8px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.icon-btn-sm{background:transparent;border:none;color:var(--text2);cursor:pointer;width:24px;height:24px;border-radius:4px;display:grid;place-items:center;transition:background .15s,color .15s}
+.icon-btn-sm:hover{background:var(--surface2);color:var(--accent)}
+.chat-list{display:flex;flex-direction:column;gap:2px;max-height:220px;overflow-y:auto}
+.chat-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:var(--radius);font-size:13px;cursor:pointer;color:var(--text2);transition:background .15s,color .15s}
+.chat-item:hover{background:var(--surface2);color:var(--text)}
+.chat-item.active{background:var(--surface2);color:var(--accent2);border-left:3px solid var(--accent);padding-left:7px}
+.chat-item .title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-item .del{opacity:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:2px 4px;border-radius:3px}
+.chat-item:hover .del{opacity:1}
+.chat-item .del:hover{background:rgba(231,76,60,.2);color:var(--red)}
+.sidebar-divider{height:1px;background:var(--border);margin:12px 0}
+.empty-small{font-size:11.5px;color:var(--text2);text-align:center;padding:12px 8px;font-style:italic}
+
 .file-input{display:none}
 .upload-status{font-size:12px;color:var(--text2);padding:6px 0;text-align:center;min-height:18px}
 .upload-status.error{color:var(--red)}
 .upload-status.success{color:var(--green)}
-.upload-status .spinner{display:inline-block;margin-right:6px;vertical-align:middle}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--text2);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 .doc-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius);margin-bottom:4px;font-size:13px;background:var(--surface2)}
 .doc-item .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .doc-status{font-size:11px;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
 .status-ready{background:#00b89422;color:var(--green)}
 .status-processing{background:#fdcb6e22;color:var(--orange)}
 .status-failed{background:#e74c3c22;color:var(--red)}
-.doc-del{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:4px 6px;border-radius:4px;display:grid;place-items:center;transition:background .15s,color .15s;font-size:11px;font-weight:600}
+.doc-del{background:transparent;border:none;color:var(--text2);cursor:pointer;padding:4px 6px;border-radius:4px;display:grid;place-items:center}
 .doc-del:hover{background:rgba(231,76,60,.15);color:var(--red)}
 .doc-del.confirming{background:var(--red);color:#fff;padding:4px 8px}
 
-.chat-main{display:flex;flex-direction:column;background:var(--bg)}
+.chat-main{display:flex;flex-direction:column;background:var(--bg);min-width:0}
 .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text2)}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text2);text-align:center}
 .empty-state h2{font-size:24px;margin-bottom:8px;color:var(--accent2)}
 .message{max-width:80%;padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.6;word-wrap:break-word;overflow-wrap:anywhere}
 .user-message{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:2px}
 .assistant-message{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:2px;max-width:min(78%,720px)}
 .assistant-message.abstained{border:1px solid var(--orange);color:var(--orange)}
+.assistant-message.error{border:1px solid var(--red);color:var(--red)}
 .citations{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
-.citation{background:rgba(108,92,231,.15);color:var(--accent2);border:1px solid rgba(108,92,231,.3);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;transition:background .15s}
+.citation{background:rgba(108,92,231,.15);color:var(--accent2);border:1px solid rgba(108,92,231,.3);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600}
 .citation:hover{background:rgba(108,92,231,.3)}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--text2);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
 .rewrite-hint{align-self:flex-start;font-size:11px;color:var(--text2);font-style:italic;padding:4px 8px;margin-top:-8px}
 
 .input-area{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
 .input-area textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-size:14px;resize:none;max-height:120px;font-family:inherit}
 .input-area textarea:focus{outline:none;border-color:var(--accent)}
 
-.config-panel h3{font-size:15px;margin-bottom:16px;color:var(--accent2);display:flex;align-items:center;gap:8px}
-.badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+.provider-section{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;background:var(--surface2)}
+.provider-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.provider-section-title{font-size:13px;font-weight:600;color:var(--accent2)}
+.provider-section-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
 .badge-ready{background:#00b89422;color:var(--green)}
 .badge-uploaded{background:#8888a022;color:var(--text2)}
 .field{margin-bottom:12px}
@@ -80,9 +98,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-size:13px}
 .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
 .config-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.status-msg{font-size:12px;margin-top:8px;padding:6px 10px;border-radius:var(--radius)}
-.status-ok{background:#00b89422;color:var(--green)}
-.status-err{background:#e74c3c22;color:var(--red)}
+.status-msg{font-size:12px;margin-top:8px;padding:6px 10px;border-radius:var(--radius);display:none}
+.status-ok{background:#00b89422;color:var(--green);display:block}
+.status-err{background:#e74c3c22;color:var(--red);display:block}
+.divider{height:1px;background:var(--border);margin:16px 0}
 
 .toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:var(--radius);font-size:13px;z-index:1000;animation:fadeIn .3s}
 .toast-success{background:var(--green);color:#000}
@@ -95,20 +114,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
 .modal-content{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.modal-header h3{font-size:16px}
 pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-size:13px;white-space:pre-wrap;overflow-x:auto}
-
-.provider-section{border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;background:var(--surface2)}
-.provider-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.provider-section-title{font-size:13px;font-weight:600;color:var(--accent2)}
-.provider-section-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
-.divider{height:1px;background:var(--border);margin:16px 0}
 </style>
 </head>
 <body>
 <div class="layout" id="layout">
   <div class="sidebar">
-    <div class="section-title">Documents</div>
+    <div class="sidebar-section">
+      <div class="section-header">
+        <span class="section-title" style="margin:0">Chats</span>
+        <button class="icon-btn-sm" id="new-chat-btn" title="New chat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <div id="chat-list" class="chat-list"></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="section-title" style="margin-top:0">Documents</div>
     <input type="file" id="file-input" accept=".pdf,.txt,.md,.docx" hidden>
     <label for="file-input" class="btn" style="width:100%;margin-bottom:12px;display:block;text-align:center;cursor:pointer">Upload Document</label>
     <div id="upload-status" class="upload-status"></div>
@@ -118,21 +142,16 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
   <div class="chat-main">
     <div class="header">
       <div class="header-brand">
-        <img src="/logo.jpeg" alt="RAG Chatbot" class="brand-logo">
+        <img src="/logo.jpeg" alt="RAG" class="brand-logo">
         <span class="header-title">RAG Chatbot</span>
+        <span class="header-subtitle" id="active-chat-title"></span>
       </div>
       <div class="header-actions">
-        <button class="header-icon-btn" id="toggle-left" aria-label="Toggle documents panel" title="Documents">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
+        <button class="header-icon-btn" id="toggle-left" title="Toggle sidebar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </button>
-        <button class="header-icon-btn" id="toggle-right" aria-label="Toggle provider panel" title="Provider">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+        <button class="header-icon-btn" id="toggle-right" title="Toggle provider panel">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
     </div>
@@ -141,66 +160,46 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
     </div>
     <div class="input-area">
       <textarea id="message-input" placeholder="Type your question..." rows="1"></textarea>
-      <button class="btn" id="send-btn">Send</button>
+      <button class="btn" id="send-btn" disabled>Send</button>
     </div>
   </div>
 
   <div class="config-panel">
-    <!-- LLM Provider Section -->
-    <div class="provider-section" id="llm-section">
+    <div class="provider-section">
       <div class="provider-section-header">
         <span class="provider-section-title">LLM Provider</span>
         <span class="provider-section-badge badge-uploaded" id="llm-badge">Not saved</span>
       </div>
-      <div class="field">
-        <label>Provider</label>
-        <select id="cfg-provider">
-          <option value="groq">Groq</option>
-          <option value="opencode">OpenCode Zen</option>
-          <option value="custom">Custom</option>
-        </select>
+      <div class="field"><label>Provider</label>
+        <select id="cfg-provider"><option value="groq">Groq</option><option value="opencode">OpenCode Zen</option><option value="custom">Custom</option></select>
       </div>
-      <div class="field">
-        <label>Provider Name</label>
-        <input id="cfg-name" value="Groq" placeholder="Groq">
-      </div>
-      <div class="field">
-        <label>Base URL</label>
-        <input id="cfg-url" value="https://api.groq.com/openai/v1" placeholder="https://api.groq.com/openai/v1">
-      </div>
-      <div class="field">
-        <label>API Key</label>
-        <input id="cfg-key" type="password" placeholder="gsk_...">
-      </div>
-      <div class="field">
-        <label>Model</label>
-        <select id="cfg-model"><option value="">Fetch models first</option></select>
-      </div>
+      <div class="field"><label>Provider Name</label><input id="cfg-name" value="Groq"></div>
+      <div class="field"><label>Base URL</label><input id="cfg-url" value="https://api.groq.com/openai/v1"></div>
+      <div class="field"><label>API Key</label><input id="cfg-key" type="password" placeholder="gsk_..."></div>
+      <div class="field"><label>Model</label><select id="cfg-model"><option value="">Fetch models first</option></select></div>
       <div class="config-actions">
         <button class="btn btn-sm" id="fetch-models-btn">Fetch Models</button>
         <button class="btn btn-sm btn-outline" id="test-btn">Test</button>
         <button class="btn btn-sm" id="save-llm-btn">Save</button>
+        <button class="btn btn-sm btn-outline" id="clear-llm-btn">Clear</button>
       </div>
-      <div id="llm-config-status"></div>
+      <div id="llm-config-status" class="status-msg"></div>
     </div>
 
     <div class="divider"></div>
 
-    <!-- Embedding Provider Section (Cohere) -->
-    <div class="provider-section" id="embedding-section">
+    <div class="provider-section">
       <div class="provider-section-header">
         <span class="provider-section-title">Embedding Provider (Cohere)</span>
         <span class="provider-section-badge badge-uploaded" id="embedding-badge">Not saved</span>
       </div>
-      <div class="field">
-        <label>Cohere API Key</label>
-        <input id="cfg-cohere-key" type="password" placeholder="sk-...">
-      </div>
+      <div class="field"><label>Cohere API Key</label><input id="cfg-cohere-key" type="password" placeholder="co_..."></div>
       <div class="config-actions">
         <button class="btn btn-sm btn-outline" id="test-cohere-btn">Test Connection</button>
         <button class="btn btn-sm" id="save-embedding-btn">Save</button>
+        <button class="btn btn-sm btn-outline" id="clear-cohere-btn">Clear</button>
       </div>
-      <div id="embedding-config-status"></div>
+      <div id="embedding-config-status" class="status-msg"></div>
     </div>
   </div>
 </div>
@@ -214,618 +213,770 @@ pre{background:var(--surface2);padding:12px;border-radius:var(--radius);font-siz
 </div>
 
 <script>
-console.log('[rag] UI loaded');
-const API = '/api/v1';
-const layout = document.getElementById('layout');
-const chatMessages = document.getElementById('chat-messages');
-const messageInput = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
-const cfgName = document.getElementById('cfg-name');
-const cfgUrl = document.getElementById('cfg-url');
-const cfgKey = document.getElementById('cfg-key');
-const cfgModel = document.getElementById('cfg-model');
-const providerSelect = document.getElementById('cfg-provider');
-const llmConfigStatus = document.getElementById('llm-config-status');
-const embeddingConfigStatus = document.getElementById('embedding-config-status');
-const cfgCohereKey = document.getElementById('cfg-cohere-key');
+"use strict";
 
-// === Panel toggles ===
-function updateCollapseState() {
-  const left = layout.classList.contains('panels-collapsed-left');
-  const right = layout.classList.contains('panels-collapsed-right');
-  if (left && right) layout.classList.add('panels-collapsed-both');
-  else layout.classList.remove('panels-collapsed-both');
-  document.getElementById('toggle-left').classList.toggle('active', left);
-  document.getElementById('toggle-right').classList.toggle('active', right);
-  sessionStorage.setItem('ui.leftCollapsed', left);
-  sessionStorage.setItem('ui.rightCollapsed', right);
-}
+var API = "/api/v1";
 
-document.getElementById('toggle-left').addEventListener('click', () => {
-  layout.classList.toggle('panels-collapsed-left');
-  layout.classList.remove('panels-collapsed-both');
-  updateCollapseState();
-});
+// =====================================================================
+// STORAGE KEYS
+// =====================================================================
+var STORAGE_CHATS = "rag.chats.v1";
+var STORAGE_ACTIVE_CHAT = "rag.active_chat.v1";
+var STORAGE_MESSAGES_PREFIX = "rag.messages.";
+var STORAGE_LLM_CONFIG = "rag_config";
+var STORAGE_COHERE_KEY = "rag_cohere_key";
 
-document.getElementById('toggle-right').addEventListener('click', () => {
-  layout.classList.toggle('panels-collapsed-right');
-  layout.classList.remove('panels-collapsed-both');
-  updateCollapseState();
-});
+// =====================================================================
+// STATE
+// =====================================================================
+var state = {
+  messages: [],
+  sending: false,
+  activeChatId: null
+};
 
-(function restorePanels() {
-  if (sessionStorage.getItem('ui.leftCollapsed') === 'true') layout.classList.add('panels-collapsed-left');
-  if (sessionStorage.getItem('ui.rightCollapsed') === 'true') layout.classList.add('panels-collapsed-right');
-  updateCollapseState();
-})();
+// =====================================================================
+// DOM CACHE
+// =====================================================================
+function $(id) { return document.getElementById(id); }
 
-// === Toast ===
-function showToast(msg, type='info') {
-  const t = document.createElement('div');
-  t.className = 'toast toast-' + type;
+var layout, chatMessages, messageInput, sendBtn;
+var cfgName, cfgUrl, cfgKey, cfgModel, providerSelect;
+var llmConfigStatus, embeddingConfigStatus, cfgCohereKey;
+
+// =====================================================================
+// UTILITIES
+// =====================================================================
+function showToast(msg, type) {
+  type = type || "info";
+  var t = document.createElement("div");
+  t.className = "toast toast-" + type;
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+  setTimeout(function() { t.remove(); }, 3000);
 }
 
 function escapeHtml(text) {
-  const d = document.createElement('div');
-  d.textContent = text;
+  var d = document.createElement("div");
+  d.textContent = text == null ? "" : String(text);
   return d.innerHTML;
-}
-
-function escapeAttr(text) {
-  return text.replace(/"/g, '"').replace(/'/g, '&apos;');
 }
 
 function extractError(obj, fallback) {
   if (!obj) return fallback;
-  if (obj.error && typeof obj.error.message === 'string') return obj.error.message;
-  if (typeof obj.detail === 'string') return obj.detail;
-  if (typeof obj.message === 'string') return obj.message;
+  if (obj.error && typeof obj.error.message === "string") return obj.error.message;
+  if (typeof obj.detail === "string") return obj.detail;
+  if (typeof obj.message === "string") return obj.message;
   return fallback;
 }
 
 function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
 }
 
-// === Chat ===
+// =====================================================================
+// LOCALSTORAGE HELPERS
+// =====================================================================
+function lsGet(key, fallback) {
+  try {
+    var v = localStorage.getItem(key);
+    return v == null ? fallback : JSON.parse(v);
+  } catch (e) { return fallback; }
+}
+
+function lsSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+function lsRemove(key) {
+  try { localStorage.removeItem(key); } catch (e) {}
+}
+
+// =====================================================================
+// CHAT PERSISTENCE
+// =====================================================================
+function loadChats() {
+  return lsGet(STORAGE_CHATS, []);
+}
+
+function saveChats(chats) {
+  lsSet(STORAGE_CHATS, chats);
+}
+
+function getActiveChatId() {
+  return lsGet(STORAGE_ACTIVE_CHAT, null);
+}
+
+function setActiveChatId(id) {
+  if (id) lsSet(STORAGE_ACTIVE_CHAT, id);
+  else lsRemove(STORAGE_ACTIVE_CHAT);
+}
+
+function loadMessagesForChat(chatId) {
+  if (!chatId) return [];
+  return lsGet(STORAGE_MESSAGES_PREFIX + chatId, []);
+}
+
+function saveMessagesForChat(chatId, messages) {
+  if (!chatId) return;
+  lsSet(STORAGE_MESSAGES_PREFIX + chatId, messages);
+}
+
+function persistCurrentChat() {
+  var id = state.activeChatId;
+  if (!id) return;
+  saveMessagesForChat(id, state.messages);
+  var chats = loadChats();
+  var idx = -1;
+  for (var i = 0; i < chats.length; i++) {
+    if (chats[i].id === id) { idx = i; break; }
+  }
+  var firstUser = null;
+  for (var j = 0; j < state.messages.length; j++) {
+    if (state.messages[j].role === "user") { firstUser = state.messages[j]; break; }
+  }
+  var title = firstUser ? firstUser.content.slice(0, 60) : "New chat";
+  if (idx >= 0) {
+    chats[idx].updated = Date.now();
+    if (firstUser && chats[idx].title === "New chat") chats[idx].title = title;
+  } else {
+    chats.push({ id: id, title: title, created: Date.now(), updated: Date.now() });
+  }
+  saveChats(chats);
+}
+
+function createNewChat() {
+  var id = "chat_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+  setActiveChatId(id);
+  state.activeChatId = id;
+  state.messages = [];
+  saveMessagesForChat(id, []);
+  var chats = loadChats();
+  chats.unshift({ id: id, title: "New chat", created: Date.now(), updated: Date.now() });
+  saveChats(chats);
+  renderMessages();
+  renderChatList();
+}
+
+function switchToChat(chatId) {
+  setActiveChatId(chatId);
+  state.activeChatId = chatId;
+  state.messages = loadMessagesForChat(chatId);
+  renderMessages();
+  renderChatList();
+}
+
+function deleteChat(chatId) {
+  var chats = loadChats().filter(function(c) { return c.id !== chatId; });
+  saveChats(chats);
+  lsRemove(STORAGE_MESSAGES_PREFIX + chatId);
+  if (state.activeChatId === chatId) {
+    if (chats.length > 0) switchToChat(chats[0].id);
+    else createNewChat();
+  } else {
+    renderChatList();
+  }
+}
+
+function renderChatList() {
+  var list = $("chat-list");
+  if (!list) return;
+  var chats = loadChats().sort(function(a, b) { return b.updated - a.updated; });
+  if (chats.length === 0) {
+    list.innerHTML = '<div class="empty-small">No chats yet</div>';
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < chats.length; i++) {
+    var c = chats[i];
+    var isActive = c.id === state.activeChatId;
+    var title = (c.title || "New chat").slice(0, 40);
+    html += '<div class="chat-item' + (isActive ? " active" : "") + '" data-id="' + escapeHtml(c.id) + '">' +
+      '<span class="title">' + escapeHtml(title) + '</span>' +
+      '<button class="del" data-del="' + escapeHtml(c.id) + '" title="Delete">&times;</button>' +
+    '</div>';
+  }
+  list.innerHTML = html;
+  var items = list.querySelectorAll(".chat-item");
+  for (var k = 0; k < items.length; k++) {
+    (function(el) {
+      el.addEventListener("click", function(e) {
+        if (e.target.closest(".del")) return;
+        switchToChat(el.dataset.id);
+      });
+    })(items[k]);
+  }
+  var dels = list.querySelectorAll(".del");
+  for (var m = 0; m < dels.length; m++) {
+    (function(el) {
+      el.addEventListener("click", function(e) {
+        e.stopPropagation();
+        if (confirm("Delete this chat?")) deleteChat(el.dataset.del);
+      });
+    })(dels[m]);
+  }
+  updateActiveChatTitle();
+}
+
+function updateActiveChatTitle() {
+  var el = $("active-chat-title");
+  if (!el) return;
+  var chats = loadChats();
+  var chat = null;
+  for (var i = 0; i < chats.length; i++) {
+    if (chats[i].id === state.activeChatId) { chat = chats[i]; break; }
+  }
+  el.textContent = (chat && chat.title !== "New chat") ? "\u00B7 " + chat.title.slice(0, 40) : "";
+}
+
+// =====================================================================
+// CHAT RENDERING
+// =====================================================================
 function renderLoading() {
-  const d = document.createElement('div');
-  d.className = 'message assistant-message loading-msg';
-  d.id = 'loading-indicator';
+  var d = document.createElement("div");
+  d.className = "message assistant-message";
+  d.id = "loading-indicator";
   d.innerHTML = '<span class="spinner"></span> Thinking...';
   chatMessages.appendChild(d);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function removeLoading() {
-  const el = document.getElementById('loading-indicator');
+  var el = $("loading-indicator");
   if (el) el.remove();
 }
 
-function renderUserMessage(text) {
-  const d = document.createElement('div');
-  d.className = 'message user-message';
-  d.innerHTML = '<div class="message-content">' + escapeHtml(text) + '</div>';
-  chatMessages.appendChild(d);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function renderAssistantMessage(answer, citations, abstained) {
-  const d = document.createElement('div');
-  d.className = 'message assistant-message' + (abstained ? ' abstained' : '');
-  d.style.width = 'fit-content';
-  d.style.maxWidth = '85%';
-
-  let citationsHtml = '';
-  if (citations && citations.length > 0) {
-    citationsHtml = '<div class="citations">' +
-      citations.map((c, i) =>
-        '<span class="citation" data-idx="' + i + '" title="' +
-        escapeAttr(c.document_name || '') + '">[' + (i + 1) + ']</span>'
-      ).join('') +
-      '</div>';
+function renderAssistantMessage(msg) {
+  var d = document.createElement("div");
+  d.className = "message assistant-message" + (msg.abstained ? " abstained" : "") + (msg.error ? " error" : "");
+  var html = '<div class="message-content">' + escapeHtml(msg.content) + '</div>';
+  if (msg.citations && msg.citations.length > 0) {
+    html += '<div class="citations">';
+    for (var i = 0; i < msg.citations.length; i++) {
+      html += '<span class="citation" data-idx="' + i + '">[' + (i + 1) + ']</span>';
+    }
+    html += '</div>';
   }
-
-  d.innerHTML =
-    '<div class="message-content">' + escapeHtml(answer) + '</div>' +
-    citationsHtml;
-
+  d.innerHTML = html;
   chatMessages.appendChild(d);
+  var citations = msg.citations || [];
+  var pills = d.querySelectorAll(".citation");
+  for (var k = 0; k < pills.length; k++) {
+    (function(el, idx) {
+      el.addEventListener("click", function() {
+        var c = citations[idx];
+        if (c) {
+          $("modal-body").textContent = (c.quote || "No text") + (c.document_name ? "\n\n\u2014 " + c.document_name : "");
+          $("source-modal").classList.remove("hidden");
+        }
+      });
+    })(pills[k], parseInt(pills[k].dataset.idx));
+  }
   chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  d.querySelectorAll('.citation').forEach(el => {
-    el.addEventListener('click', () => {
-      const idx = parseInt(el.dataset.idx);
-      const c = citations[idx];
-      if (c) {
-        document.getElementById('modal-body').textContent =
-          (c.quote || 'No text available') +
-          (c.document_name ? '\n\n— ' + c.document_name : '');
-        document.getElementById('source-modal').classList.remove('hidden');
-      }
-    });
-  });
 }
 
-document.getElementById('close-modal').addEventListener('click', () => document.getElementById('source-modal').classList.add('hidden'));
-document.getElementById('modal-backdrop').addEventListener('click', () => document.getElementById('source-modal').classList.add('hidden'));
+function renderMessages() {
+  chatMessages.innerHTML = "";
+  if (state.messages.length === 0) {
+    chatMessages.innerHTML = '<div class="empty-state"><h2>RAG Chatbot</h2><p>Ask questions about your uploaded documents</p></div>';
+    return;
+  }
+  for (var i = 0; i < state.messages.length; i++) {
+    var m = state.messages[i];
+    if (m.role === "user") {
+      var d = document.createElement("div");
+      d.className = "message user-message";
+      d.innerHTML = '<div class="message-content">' + escapeHtml(m.content) + '</div>';
+      chatMessages.appendChild(d);
+    } else {
+      renderAssistantMessage(m);
+      if (m.rewritten_query) {
+        var hint = document.createElement("div");
+        hint.className = "rewrite-hint";
+        hint.textContent = 'Rewritten: "' + m.rewritten_query + '"';
+        chatMessages.appendChild(hint);
+      }
+    }
+  }
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
 
+function updateSendState() {
+  var hasText = messageInput.value.trim().length > 0;
+  sendBtn.disabled = state.sending || !hasText;
+}
+
+// =====================================================================
+// SEND MESSAGE
+// =====================================================================
 async function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text) return;
+  var text = messageInput.value.trim();
+  if (!text || state.sending) return;
 
-  const saved = sessionStorage.getItem('rag_config');
-  if (!saved) {
-    showToast('Configure a provider first. Opening panel.', 'info');
-    layout.classList.remove('panels-collapsed-right');
-    updateCollapseState();
-    document.getElementById('cfg-key').focus();
+  if (!localStorage.getItem(STORAGE_LLM_CONFIG)) {
+    showToast("Configure LLM provider first", "error");
+    return;
+  }
+  if (!localStorage.getItem(STORAGE_COHERE_KEY)) {
+    showToast("Configure Cohere API key first", "error");
     return;
   }
 
-  messageInput.value = '';
-  messageInput.style.height = 'auto';
-  renderUserMessage(text);
+  messageInput.value = "";
+  messageInput.style.height = "auto";
+
+  var userMsg = { role: "user", content: text, ts: Date.now() };
+  state.messages.push(userMsg);
+  persistCurrentChat();
+  renderMessages();
+
+  state.sending = true;
+  updateSendState();
   renderLoading();
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
-
   try {
-    let res = await fetch(API + '/query', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+    var res = await fetch(API + "/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: text }),
-      credentials: 'same-origin',
-      signal: controller.signal
+      credentials: "same-origin"
     });
 
-    // Auto-recover from stale session
-    if (res.status === 400) {
-      const errBody = await res.clone().json().catch(() => ({}));
-      const msg = extractError(errBody, '');
-      if (msg.toLowerCase().includes('no provider configured')) {
-        try {
-          await saveProviderConfig(false);
-          res = await fetch(API + '/query', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ question: text }),
-            credentials: 'same-origin',
-            signal: controller.signal
-          });
-        } catch (e) { /* fall through to error handling */ }
-      }
-    }
-
-    clearTimeout(timeout);
     removeLoading();
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(extractError(err, 'HTTP ' + res.status));
+      var errBody = await res.json().catch(function() { return {}; });
+      throw new Error(extractError(errBody, "HTTP " + res.status));
     }
 
-    const data = await res.json();
-    renderAssistantMessage(data.answer, data.citations || [], data.abstained);
-    if (data.rewritten_query) {
-      const hint = document.createElement('div');
-      hint.className = 'rewrite-hint';
-      hint.textContent = 'Rewritten: "' + data.rewritten_query + '"';
-      chatMessages.appendChild(hint);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-    loadDocuments();
+    var data = await res.json();
+    var assistantMsg = {
+      role: "assistant",
+      content: data.answer || "",
+      citations: data.citations || [],
+      abstained: !!data.abstained,
+      rewritten_query: data.rewritten_query || null,
+      ts: Date.now()
+    };
+    state.messages.push(assistantMsg);
+    persistCurrentChat();
+    renderMessages();
+    renderChatList();
   } catch (err) {
-    clearTimeout(timeout);
     removeLoading();
-    if (err.name === 'AbortError') {
-      showToast('Request timed out. Try again.', 'error');
+    showToast(err.message, "error");
+    state.messages.push({
+      role: "assistant",
+      content: "Error: " + err.message,
+      error: true,
+      ts: Date.now()
+    });
+    persistCurrentChat();
+    renderMessages();
+  } finally {
+    state.sending = false;
+    updateSendState();
+  }
+}
+
+// =====================================================================
+// DOCUMENTS
+// =====================================================================
+function loadDocuments() {
+  fetch(API + "/documents")
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = $("document-list");
+      list.innerHTML = "";
+      var docs = data.documents || [];
+      if (docs.length === 0) {
+        list.innerHTML = '<div class="empty-small">No documents yet</div>';
+        return;
+      }
+      for (var i = 0; i < docs.length; i++) {
+        (function(doc) {
+          var item = document.createElement("div");
+          item.className = "doc-item";
+          var statusClass = "status-" + (doc.status || "uploaded").toLowerCase();
+          item.innerHTML =
+            '<span class="name" title="' + escapeHtml(doc.filename || "") + '">' + escapeHtml(doc.filename || "Untitled") + '</span>' +
+            '<span class="doc-status ' + statusClass + '">' + escapeHtml(doc.status || "UPLOADED") + '</span>' +
+            '<button class="doc-del" title="Delete">&times;</button>';
+          var del = item.querySelector(".doc-del");
+          var confirming = false;
+          del.addEventListener("click", function(e) {
+            e.stopPropagation();
+            if (!confirming) {
+              confirming = true;
+              del.classList.add("confirming");
+              del.textContent = "Sure?";
+              setTimeout(function() {
+                confirming = false;
+                del.classList.remove("confirming");
+                del.textContent = "\u00D7";
+              }, 3000);
+              return;
+            }
+            fetch(API + "/documents/" + encodeURIComponent(doc.id), { method: "DELETE" })
+              .then(function() {
+                showToast("Deleted: " + doc.filename, "success");
+                loadDocuments();
+              })
+              .catch(function() { showToast("Delete failed", "error"); });
+          });
+          list.appendChild(item);
+        })(docs[i]);
+      }
+    })
+    .catch(function() {
+      $("document-list").innerHTML = '<div class="empty-small">Failed to load documents</div>';
+    });
+}
+
+function uploadFile(file) {
+  var statusEl = $("upload-status");
+  statusEl.className = "upload-status";
+  statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + " (" + formatBytes(file.size) + ")";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", API + "/documents/upload");
+  xhr.timeout = 300000;
+
+  xhr.onload = function() {
+    var data = null;
+    try { data = JSON.parse(xhr.responseText); } catch (e) {}
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var id = data.id;
+      statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) + "...";
+      pollDocument(id, 0);
     } else {
-      showToast(err.message, 'error');
-      renderAssistantMessage('Error: ' + err.message, [], false);
+      statusEl.className = "upload-status error";
+      statusEl.textContent = "Upload failed: " + (data && (data.detail || data.message) || xhr.status);
     }
-  }
+  };
+
+  xhr.onerror = function() {
+    statusEl.className = "upload-status error";
+    statusEl.textContent = "Network error during upload";
+  };
+
+  xhr.ontimeout = function() {
+    statusEl.className = "upload-status error";
+    statusEl.textContent = "Upload timed out";
+  };
+
+  var fd = new FormData();
+  fd.append("file", file);
+  xhr.send(fd);
 }
 
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = messageInput.scrollHeight + 'px'; });
-
-// === Provider presets ===
-const PROVIDER_PRESETS = {
-  groq: { name: 'Groq', base_url: 'https://api.groq.com/openai/v1' },
-  opencode: { name: 'OpenCode Zen', base_url: 'https://opencode.ai/zen/v1' },
-  custom: { name: '', base_url: '' }
-};
-
-providerSelect.addEventListener('change', () => {
-  const preset = PROVIDER_PRESETS[providerSelect.value];
-  if (preset) {
-    cfgName.value = preset.name;
-    cfgUrl.value = preset.base_url;
-    cfgModel.innerHTML = '<option value="">Fetch models first</option>';
+function pollDocument(docId, attempt) {
+  if (attempt > 100) {
+    $("upload-status").className = "upload-status error";
+    $("upload-status").textContent = "Processing timed out";
+    return;
   }
-});
-
-function restoreProviderSelection() {
-  const url = cfgUrl.value.toLowerCase();
-  if (url.includes('groq.com')) providerSelect.value = 'groq';
-  else if (url.includes('opencode.ai')) providerSelect.value = 'opencode';
-  else if (url) providerSelect.value = 'custom';
+  setTimeout(function() {
+    fetch(API + "/documents/" + encodeURIComponent(docId))
+      .then(function(r) { return r.json(); })
+      .then(function(doc) {
+        if (doc.status === "READY") {
+          $("upload-status").className = "upload-status success";
+          $("upload-status").textContent = "Ready: " + (doc.filename || docId);
+          showToast("Indexed: " + (doc.filename || docId), "success");
+          loadDocuments();
+        } else if (doc.status === "FAILED") {
+          $("upload-status").className = "upload-status error";
+          $("upload-status").textContent = "Failed: " + (doc.error_message || "unknown");
+          loadDocuments();
+        } else {
+          pollDocument(docId, attempt + 1);
+        }
+      })
+      .catch(function() { pollDocument(docId, attempt + 1); });
+  }, 2000);
 }
 
-// === Provider config ===
+// =====================================================================
+// PROVIDER CONFIG
+// =====================================================================
 function updateProviderStatus(saved, isLLM) {
-  const badgeId = isLLM ? 'llm-badge' : 'embedding-badge';
-  const b = document.getElementById(badgeId);
-  b.className = 'provider-section-badge ' + (saved ? 'badge-ready' : 'badge-uploaded');
-  b.textContent = saved ? 'Saved' : 'Not saved';
+  var id = isLLM ? "llm-badge" : "embedding-badge";
+  var b = $(id);
+  b.className = "provider-section-badge " + (saved ? "badge-ready" : "badge-uploaded");
+  b.textContent = saved ? "Saved" : "Not saved";
 }
 
 async function saveLLMConfig(showToastOnSuccess) {
-  const name = cfgName.value.trim();
-  const url = cfgUrl.value.trim();
-  const key = cfgKey.value.trim();
-  const model = cfgModel.value;
-  if (!name || !url || !key || !model) {
-    throw new Error('Fill all LLM fields first');
-  }
-  const res = await fetch(API + '/provider/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ name, base_url: url, api_key: key, model })
+  var name = cfgName.value.trim();
+  var url = cfgUrl.value.trim();
+  var key = cfgKey.value.trim();
+  var model = cfgModel.value;
+  if (!name || !url || !key || !model) throw new Error("Fill all LLM fields");
+  var res = await fetch(API + "/provider/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: name, base_url: url, api_key: key, model: model })
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
-  sessionStorage.setItem('rag_config', JSON.stringify({ name, base_url: url, api_key: key, model }));
+  var data = await res.json().catch(function() { return {}; });
+  if (!res.ok) throw new Error(extractError(data, "HTTP " + res.status));
+  lsSet(STORAGE_LLM_CONFIG, { name: name, base_url: url, api_key: key, model: model });
   updateProviderStatus(true, true);
-  if (showToastOnSuccess) showToast('LLM configuration saved', 'success');
-  return true;
+  if (showToastOnSuccess) showToast("LLM saved", "success");
 }
 
 async function saveCohereConfig(showToastOnSuccess) {
-  const key = cfgCohereKey.value.trim();
-  if (!key) {
-    throw new Error('Enter Cohere API key');
-  }
-  const res = await fetch(API + '/provider/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+  var key = cfgCohereKey.value.trim();
+  if (!key) throw new Error("Enter Cohere API key");
+  var res = await fetch(API + "/provider/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cohere_api_key: key })
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
-  sessionStorage.setItem('rag_cohere_key', key);
+  var data = await res.json().catch(function() { return {}; });
+  if (!res.ok) throw new Error(extractError(data, "HTTP " + res.status));
+  lsSet(STORAGE_COHERE_KEY, key);
   updateProviderStatus(true, false);
-  if (showToastOnSuccess) showToast('Cohere configuration saved', 'success');
-  return true;
+  if (showToastOnSuccess) showToast("Cohere saved", "success");
 }
 
-document.getElementById('fetch-models-btn').addEventListener('click', async () => {
-  const url = cfgUrl.value.trim();
-  const key = cfgKey.value.trim();
-  if (!url || !key) { showToast('Enter base URL and API key', 'error'); return; }
-
-  try {
-    const res = await fetch(API + '/provider/models', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ base_url: url, api_key: key })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(extractError(data, 'HTTP ' + res.status));
-
-    cfgModel.innerHTML = '';
-    (data.models || []).forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m;
-      opt.textContent = m;
-      cfgModel.appendChild(opt);
-    });
-    showToast('Loaded ' + data.models.length + ' models', 'success');
-  } catch (err) {
-    showToast('Failed to fetch models: ' + err.message, 'error');
-  }
-});
-
-document.getElementById('test-btn').addEventListener('click', async () => {
-  const url = cfgUrl.value.trim();
-  const key = cfgKey.value.trim();
-  const model = cfgModel.value;
-  if (!url || !key || !model) { showToast('Fill all LLM fields', 'error'); return; }
-
-  llmConfigStatus.className = 'status-msg';
-  llmConfigStatus.textContent = 'Testing...';
-  llmConfigStatus.style.display = 'block';
-
-  try {
-    const res = await fetch(API + '/provider/test', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ base_url: url, api_key: key, model })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      await saveLLMConfig(false);
-      llmConfigStatus.className = 'status-msg status-ok';
-      llmConfigStatus.textContent = 'Connection successful. Configuration saved.';
-    } else {
-      llmConfigStatus.className = 'status-msg status-err';
-      llmConfigStatus.textContent = data.error;
+function loadSavedConfig() {
+  var c = lsGet(STORAGE_LLM_CONFIG, null);
+  if (c) {
+    cfgName.value = c.name || "";
+    cfgUrl.value = c.base_url || "";
+    cfgKey.value = c.api_key || "";
+    if (c.model) {
+      cfgModel.innerHTML = '<option value="' + escapeHtml(c.model) + '" selected>' + escapeHtml(c.model) + '</option>';
     }
-  } catch (err) {
-    llmConfigStatus.className = 'status-msg status-err';
-    llmConfigStatus.textContent = err.message;
-  }
-});
-
-document.getElementById('test-cohere-btn').addEventListener('click', async () => {
-  const key = cfgCohereKey.value.trim();
-  if (!key) { showToast('Enter Cohere API key', 'error'); return; }
-
-  embeddingConfigStatus.className = 'status-msg';
-  embeddingConfigStatus.textContent = 'Testing...';
-  embeddingConfigStatus.style.display = 'block';
-
-  try {
-    const res = await fetch(API + '/provider/test/cohere', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ base_url: '', api_key: key, model: 'embed-english-v3.0' })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      await saveCohereConfig(false);
-      embeddingConfigStatus.className = 'status-msg status-ok';
-      embeddingConfigStatus.textContent = 'Cohere connection successful. Configuration saved.';
-    } else {
-      embeddingConfigStatus.className = 'status-msg status-err';
-      embeddingConfigStatus.textContent = data.error;
-    }
-  } catch (err) {
-    embeddingConfigStatus.className = 'status-msg status-err';
-    embeddingConfigStatus.textContent = err.message;
-  }
-});
-
-document.getElementById('save-llm-btn').addEventListener('click', async () => {
-  try {
-    await saveLLMConfig(true);
-  } catch (err) {
-    showToast('Failed to save LLM: ' + err.message, 'error');
-  }
-});
-
-document.getElementById('save-embedding-btn').addEventListener('click', async () => {
-  try {
-    await saveCohereConfig(true);
-  } catch (err) {
-    showToast('Failed to save Cohere: ' + err.message, 'error');
-  }
-});
-
-// Load saved config on page load
-(function loadSavedConfig() {
-  const saved = sessionStorage.getItem('rag_config');
-  if (saved) {
-    try {
-      const c = JSON.parse(saved);
-      cfgName.value = c.name || '';
-      cfgUrl.value = c.base_url || '';
-      cfgKey.value = c.api_key || '';
-
-      if (c.model) {
-        cfgModel.innerHTML =
-          '<option value="' + escapeAttr(c.model) + '" selected>' +
-          escapeHtml(c.model) + '</option>';
-      }
-
-      const llmComplete = Boolean(c.name && c.base_url && c.api_key && c.model);
-      updateProviderStatus(llmComplete, true);
-    } catch {
-      updateProviderStatus(false, true);
-    }
+    updateProviderStatus(true, true);
   } else {
     updateProviderStatus(false, true);
   }
-  restoreProviderSelection();
-
-  const savedCohere = sessionStorage.getItem('rag_cohere_key');
-  if (savedCohere) {
-    cfgCohereKey.value = savedCohere;
+  var ck = lsGet(STORAGE_COHERE_KEY, null);
+  if (ck) {
+    cfgCohereKey.value = ck;
     updateProviderStatus(true, false);
   } else {
     updateProviderStatus(false, false);
   }
-})();
-
-// === Documents with delete button ===
-async function loadDocuments() {
-  try {
-    const res = await fetch(API + '/documents');
-    const data = await res.json();
-    const list = document.getElementById('document-list');
-    list.innerHTML = '';
-    (data.documents || []).forEach(doc => {
-      const item = document.createElement('div');
-      item.className = 'doc-item';
-
-      const name = document.createElement('span');
-      name.className = 'name';
-      name.textContent = doc.filename || 'Untitled';
-      name.title = doc.filename || '';
-
-      const status = document.createElement('span');
-      status.className = 'doc-status status-' + (doc.status || 'uploaded').toLowerCase();
-      status.textContent = doc.status || 'UPLOADED';
-
-      const del = document.createElement('button');
-      del.className = 'doc-del';
-      del.title = 'Delete';
-      del.setAttribute('aria-label', 'Delete ' + (doc.filename || 'document'));
-      del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-
-      let confirming = false;
-      let deleting = false;
-      del.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (deleting) return;
-        if (!confirming) {
-          confirming = true;
-          del.classList.add('confirming');
-          del.textContent = 'Sure?';
-          setTimeout(() => {
-            confirming = false;
-            del.classList.remove('confirming');
-            del.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-          }, 3000);
-          return;
-        }
-        deleting = true;
-        try {
-          const r = await fetch(API + '/documents/' + encodeURIComponent(doc.id), { method: 'DELETE' });
-          if (!r.ok) throw new Error('Delete failed');
-          showToast('Deleted: ' + (doc.filename || doc.id), 'success');
-          loadDocuments();
-        } catch (err) {
-          showToast('Could not delete: ' + err.message, 'error');
-        } finally {
-          deleting = false;
-        }
-      });
-
-      item.appendChild(name);
-      item.appendChild(status);
-      item.appendChild(del);
-      list.appendChild(item);
-    });
-  } catch (err) {
-    showToast('Could not load documents', 'error');
-  }
 }
 
-// === Upload with progress (XHR) ===
-function uploadWithProgress(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append('file', file);
+// =====================================================================
+// WIRE EVENTS
+// =====================================================================
+function wireEvents() {
+  // Send button
+  sendBtn.addEventListener("click", sendMessage);
+  messageInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  messageInput.addEventListener("input", function() {
+    messageInput.style.height = "auto";
+    messageInput.style.height = messageInput.scrollHeight + "px";
+    updateSendState();
+  });
 
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', API + '/documents/upload');
+  // File upload
+  $("file-input").addEventListener("change", function(e) {
+    var files = Array.from(e.target.files || []);
+    for (var i = 0; i < files.length; i++) uploadFile(files[i]);
+    e.target.value = "";
+  });
 
-    xhr.upload.onprogress = (evt) => {
-      if (evt.lengthComputable && onProgress) {
-        onProgress(evt.loaded, evt.total);
-      }
+  // New chat
+  $("new-chat-btn").addEventListener("click", createNewChat);
+
+  // Panel toggles
+  $("toggle-left").addEventListener("click", function() {
+    layout.classList.toggle("panels-collapsed-left");
+    layout.classList.remove("panels-collapsed-both");
+    updateCollapseState();
+  });
+  $("toggle-right").addEventListener("click", function() {
+    layout.classList.toggle("panels-collapsed-right");
+    layout.classList.remove("panels-collapsed-both");
+    updateCollapseState();
+  });
+
+  // Modal
+  $("close-modal").addEventListener("click", function() { $("source-modal").classList.add("hidden"); });
+  $("modal-backdrop").addEventListener("click", function() { $("source-modal").classList.add("hidden"); });
+
+  // Provider: preset change
+  providerSelect.addEventListener("change", function() {
+    var presets = {
+      groq: { name: "Groq", url: "https://api.groq.com/openai/v1" },
+      opencode: { name: "OpenCode Zen", url: "https://opencode.ai/zen/v1" },
+      custom: { name: "", url: "" }
     };
+    var p = presets[providerSelect.value];
+    if (p) {
+      cfgName.value = p.name;
+      cfgUrl.value = p.url;
+      cfgModel.innerHTML = '<option value="">Fetch models first</option>';
+    }
+  });
 
-    xhr.onload = () => {
-      let data = null;
-      try { data = JSON.parse(xhr.responseText); } catch {}
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(data);
+  // Fetch models
+  $("fetch-models-btn").addEventListener("click", async function() {
+    var url = cfgUrl.value.trim();
+    var key = cfgKey.value.trim();
+    if (!url || !key) { showToast("Enter base URL and API key", "error"); return; }
+    try {
+      var res = await fetch(API + "/provider/models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base_url: url, api_key: key })
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(extractError(data, "HTTP " + res.status));
+      cfgModel.innerHTML = "";
+      (data.models || []).forEach(function(m) {
+        var o = document.createElement("option");
+        o.value = m; o.textContent = m;
+        cfgModel.appendChild(o);
+      });
+      showToast("Loaded " + data.models.length + " models", "success");
+    } catch (err) {
+      showToast("Failed: " + err.message, "error");
+    }
+  });
+
+  // Test LLM
+  $("test-btn").addEventListener("click", async function() {
+    var url = cfgUrl.value.trim();
+    var key = cfgKey.value.trim();
+    var model = cfgModel.value;
+    if (!url || !key || !model) { showToast("Fill all LLM fields", "error"); return; }
+    llmConfigStatus.className = "status-msg status-ok";
+    llmConfigStatus.textContent = "Testing...";
+    try {
+      var res = await fetch(API + "/provider/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base_url: url, api_key: key, model: model })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        await saveLLMConfig(false);
+        llmConfigStatus.className = "status-msg status-ok";
+        llmConfigStatus.textContent = "Connection successful. Configuration saved.";
       } else {
-        const msg = (data && (data.detail || (data.error && data.error.message))) || ('HTTP ' + xhr.status);
-        reject(new Error(msg));
+        llmConfigStatus.className = "status-msg status-err";
+        llmConfigStatus.textContent = data.error || "Test failed";
       }
-    };
+    } catch (err) {
+      llmConfigStatus.className = "status-msg status-err";
+      llmConfigStatus.textContent = err.message;
+    }
+  });
 
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.ontimeout = () => reject(new Error('Upload timed out after 5 minutes'));
-    xhr.timeout = 300000;  // 5 minutes
+  // Test Cohere
+  $("test-cohere-btn").addEventListener("click", async function() {
+    var key = cfgCohereKey.value.trim();
+    if (!key) { showToast("Enter Cohere API key", "error"); return; }
+    embeddingConfigStatus.className = "status-msg status-ok";
+    embeddingConfigStatus.textContent = "Testing...";
+    try {
+      var res = await fetch(API + "/provider/test/cohere", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base_url: "", api_key: key, model: "embed-english-v3.0" })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        await saveCohereConfig(false);
+        embeddingConfigStatus.className = "status-msg status-ok";
+        embeddingConfigStatus.textContent = "Cohere connection successful. Configuration saved.";
+      } else {
+        embeddingConfigStatus.className = "status-msg status-err";
+        embeddingConfigStatus.textContent = data.error || "Test failed";
+      }
+    } catch (err) {
+      embeddingConfigStatus.className = "status-msg status-err";
+      embeddingConfigStatus.textContent = err.message;
+    }
+  });
 
-    xhr.send(formData);
+  // Save buttons
+  $("save-llm-btn").addEventListener("click", async function() {
+    try { await saveLLMConfig(true); } catch (err) { showToast("Save failed: " + err.message, "error"); }
+  });
+  $("save-embedding-btn").addEventListener("click", async function() {
+    try { await saveCohereConfig(true); } catch (err) { showToast("Save failed: " + err.message, "error"); }
+  });
+
+  // Clear buttons
+  $("clear-llm-btn").addEventListener("click", function() {
+    if (!confirm("Clear LLM configuration?")) return;
+    lsRemove(STORAGE_LLM_CONFIG);
+    cfgName.value = ""; cfgUrl.value = ""; cfgKey.value = "";
+    cfgModel.innerHTML = '<option value="">Fetch models first</option>';
+    updateProviderStatus(false, true);
+  });
+  $("clear-cohere-btn").addEventEventListener("click", function() {
+    if (!confirm("Clear Cohere configuration?")) return;
+    lsRemove(STORAGE_COHERE_KEY);
+    cfgCohereKey.value = "";
+    updateProviderStatus(false, false);
   });
 }
 
-document.getElementById('file-input').addEventListener('change', async (e) => {
-  const files = Array.from(e.target.files || []);
-  if (files.length === 0) return;
+function updateCollapseState() {
+  var left = layout.classList.contains("panels-collapsed-left");
+  var right = layout.classList.contains("panels-collapsed-right");
+  if (left && right) layout.classList.add("panels-collapsed-both");
+  else layout.classList.remove("panels-collapsed-both");
+}
 
-  const statusEl = document.getElementById('upload-status');
-  const fileInput = e.target;
+// =====================================================================
+// BOOT
+// =====================================================================
+function boot() {
+  layout = $("layout");
+  chatMessages = $("chat-messages");
+  messageInput = $("message-input");
+  sendBtn = $("send-btn");
+  cfgName = $("cfg-name");
+  cfgUrl = $("cfg-url");
+  cfgKey = $("cfg-key");
+  cfgModel = $("cfg-model");
+  providerSelect = $("cfg-provider");
+  llmConfigStatus = $("llm-config-status");
+  embeddingConfigStatus = $("embedding-config-status");
+  cfgCohereKey = $("cfg-cohere-key");
 
-  for (const file of files) {
-    statusEl.className = 'upload-status';
-    statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' (' + formatBytes(file.size) + ')…';
+  wireEvents();
+  loadSavedConfig();
 
-    try {
-      const data = await uploadWithProgress(file, (loaded, total) => {
-        const pct = Math.round((loaded / total) * 100);
-        if (loaded < total) {
-          statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + ' — ' + pct + '% (' + formatBytes(loaded) + ' / ' + formatBytes(total) + ')';
-        } else {
-          statusEl.innerHTML = '<span class="spinner"></span> Queued for processing. This may take 2-5 minutes…';
-        }
-      });
-
-      const status = (data && data.status) || 'unknown';
-      if (status.toUpperCase() === 'FAILED') {
-        throw new Error((data && data.error_message) || 'Backend returned FAILED status');
-      }
-
-      if (status.toUpperCase() === 'UPLOADED') {
-        // Poll until READY or FAILED, max 5 minutes (100 attempts × 3s)
-        let attempts = 0;
-        while (attempts < 100) {
-          await new Promise(r => setTimeout(r, 3000));
-          const r = await fetch(API + '/documents/' + encodeURIComponent(data.id));
-          if (!r.ok) break;
-          const doc = await r.json();
-          if (doc.status === 'READY') {
-            statusEl.className = 'upload-status success';
-            statusEl.textContent = 'Indexed: ' + file.name + ' (' + (doc.chunk_count || '?') + ' chunks)';
-            showToast('Indexed: ' + file.name, 'success');
-            break;
-          }
-          if (doc.status === 'FAILED') {
-            statusEl.className = 'upload-status error';
-            statusEl.textContent = 'Failed: ' + file.name + ' — ' + (doc.error_message || 'processing error');
-            showToast('Failed: ' + file.name + ' — ' + (doc.error_message || 'processing error'), 'error');
-            break;
-          }
-          // Show progress with chunk count and ETA
-          const totalChunks = doc.chunk_count || 0;
-          if (totalChunks > 0 && doc.status === 'PROCESSING') {
-            const elapsed = attempts * 3;
-            const eta = Math.max(0, Math.round((totalChunks / Math.max(1, attempts)) * 3 - elapsed));
-            statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) +
-              ' — ' + totalChunks + ' chunks, ~' + eta + 's remaining…';
-          }
-          attempts++;
-        }
-        if (attempts >= 100) {
-          statusEl.className = 'upload-status error';
-          statusEl.textContent = 'Timed out: ' + file.name + ' — check server log';
-          showToast('Upload timed out: ' + file.name, 'error');
-        }
-      } else {
-        statusEl.className = 'upload-status success';
-        statusEl.textContent = 'Uploaded: ' + file.name + ' (' + status + ')';
-        showToast('Uploaded: ' + file.name, 'success');
-      }
-    } catch (err) {
-      console.error('[rag] upload error', err);
-      statusEl.className = 'upload-status error';
-      statusEl.textContent = 'Failed: ' + file.name + ' — ' + err.message;
-      showToast('Upload failed: ' + err.message, 'error');
-    }
+  // Chat init
+  var activeId = getActiveChatId();
+  if (!activeId) {
+    createNewChat();
+  } else {
+    state.activeChatId = activeId;
+    state.messages = loadMessagesForChat(activeId);
   }
+  renderChatList();
+  renderMessages();
+  updateSendState();
 
-  fileInput.value = '';
   loadDocuments();
-  setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'upload-status'; }, 5000);
-});
+  console.log("[rag] UI loaded");
+}
 
-loadDocuments();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
 </script>
 </body>
 </html>
