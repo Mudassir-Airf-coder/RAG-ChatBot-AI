@@ -1,12 +1,14 @@
-from app.config import settings
 from app.exceptions import ValidationError
 
 
-def chunk_text(
-    text: str,
-    chunk_size: int = settings.chunk_size,
-    overlap: int = settings.chunk_overlap,
-) -> list[dict]:
+def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[dict]:
+    """Split text into overlapping chunks.
+
+    Prefers paragraph boundaries, then sentence boundaries, then word
+    boundaries. Never splits mid-word unless the input has no whitespace.
+
+    Returns a list of {"index": int, "text": str} dicts.
+    """
     if not text:
         return []
     if chunk_size <= 0:
@@ -14,7 +16,9 @@ def chunk_text(
     if overlap < 0:
         raise ValidationError("overlap must be non-negative")
     if overlap >= chunk_size:
-        raise ValidationError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
+        raise ValidationError(
+            f"overlap ({overlap}) must be < chunk_size ({chunk_size})"
+        )
 
     chunks = []
     start = 0
@@ -37,10 +41,8 @@ def chunk_text(
         if end >= n:
             break
 
-        # Force progress: next start must be > current start
         next_start = end - overlap
         if next_start <= start:
-            # Force minimal progress to avoid infinite loop
             next_start = start + 1
         start = next_start
 
@@ -48,8 +50,13 @@ def chunk_text(
 
 
 def _find_break_point(text: str, start: int, end: int) -> int:
-    for sep in ["\n\n", "\n", ". ", " "]:
+    """Find the best split point between start and end.
+
+    Priority: paragraph break → sentence break → word break.
+    Falls back to end if nothing found.
+    """
+    for sep in ("\n\n", "\n", ". ", "! ", "? ", "; ", ", "):
         last = text.rfind(sep, start, end)
-        if last > start:
+        if last > start + (end - start) // 2:
             return last + len(sep)
     return end

@@ -1,6 +1,30 @@
-from app.config import settings
 from app.exceptions import ValidationError
 from app.llm.base import LLMProvider
+
+
+SYSTEM_PROMPT = """You are a helpful assistant that answers questions using only the provided document excerpts.
+
+Rules:
+1. If the excerpts contain information relevant to the question, use it. Extract specific facts, names, numbers, and quotes.
+2. Answer in 2-4 sentences. Be direct and specific.
+3. When you use information from an excerpt, cite it inline like [1] or [2] -- use the number shown before each excerpt.
+4. Only say "I couldn't find this in the uploaded documents." if the excerpts are COMPLETELY unrelated to the question. Do not abstain just because the answer is partial.
+5. Do not repeat the question. Do not add filler like "Sure!" or "Great question!".
+6. Do not use bullet points or lists unless the user asks for them.
+7. If excerpts conflict, mention the conflict in one sentence.
+8. Reply in the same language as the question (Hindi in -> Hindi out, English in -> English out).
+9. If you cite, cite only the excerpts you actually used. Do not cite every excerpt."""
+
+
+def _format_context(chunks: list[dict]) -> str:
+    """Format chunks as numbered excerpts for the LLM."""
+    parts = []
+    for i, chunk in enumerate(chunks, start=1):
+        text = chunk.get("chunk_text", "").strip()
+        if not text:
+            continue
+        parts.append(f"[{i}] {text}")
+    return "\n\n".join(parts)
 
 
 async def generate_answer(
@@ -8,55 +32,66 @@ async def generate_answer(
     question: str,
     provider: LLMProvider,
     model: str,
-    concise: bool = True,
+    max_tokens: int = 500,
+    temperature: float = 0.1,
 ) -> dict:
+    """Generate a grounded answer with citations.
+
+    Returns:
+        {"answer": str, "citations": list[dict], "used_indices": list[int]}
+        where used_indices are the 1-based excerpt numbers the LLM actually
+        referenced in its answer.
+    """
     if not context_chunks:
         raise ValidationError("No document context available for answering")
 
-    filtered = [c for c in context_chunks if c.get("score", 0) >= 0.3]
-    if not filtered:
-        filtered = context_chunks[:3]
+    context_text = _format_context(context_chunks)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": f"Excerpts:\n{context_text}\n\nQuestion: {question}",
+        },
+    ]
 
-    context_text = "\n\n".join(
-        f"[{i + 1}] {c['chunk_text']}" for i, c in enumerate(filtered)
+    answer = await provider.chat(
+        model,
+        messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
     )
 
-    if concise:
-        system_prompt = (
-            "You are a RAG assistant. Answer questions strictly from the uploaded documents.\n\n"
-            "RULES:\n"
-            "1. Answer in 1-3 sentences. Only expand if user explicitly asks for detail.\n"
-            "2. Use ONLY provided context. Never invent facts.\n"
-            "3. If context lacks the answer, reply exactly: \"I couldn't find this in the uploaded documents.\"\n"
-            "4. Cite source filename inline when relevant, like [filename.md].\n"
-            "5. No filler. No \"Sure!\", \"Great question!\", \"Based on the context...\".\n"
-            "6. No bullet points unless user asks for a list.\n"
-            "7. If chunks conflict, say so in one sentence.\n"
-            "8. Reply in the user's language (Hindi → Hindi, English → English).\n"
-            "9. Do not restate the question."
+    used_indices = _extract_used_indices(answer, max_index=len(context_chunks))
+
+    citations = []
+    for i, chunk in enumerate(context_chunks, start=1):
+        if i not in used_indices:
+            continue
+        citations.append(
+            {
+                "citation_index": len(citations) + 1,
+                "excerpt_index": i,
+                "document_id": chunk.get("document_id", ""),
+                "chunk_id": chunk.get("chunk_id", ""),
+            }
         )
-        max_tokens = settings.max_tokens_concise
-    else:
-        system_prompt = (
-            "You are a RAG assistant. Answer questions from the uploaded documents. "
-            "Cite sources. If context lacks the answer, say so."
-        )
-        max_tokens = settings.max_tokens_verbose
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
-    ]
+    return {
+        "answer": answer,
+        "citations": citations,
+        "used_indices": sorted(used_indices),
+    }
 
-    answer = await provider.chat(model, messages, max_tokens=max_tokens, temperature=0.2)
 
-    citations = [
-        {
-            "citation_index": i + 1,
-            "document_id": c["document_id"],
-            "chunk_id": c["chunk_id"],
-        }
-        for i, c in enumerate(filtered)
-    ]
-
-    return {"answer": answer, "citations": citations}
+def _extract_used_indices(answer: str, max_index: int) -> set[int]:
+    """Parse [N] references from the answer text."""
+    import re
+    used: set[int] = set()
+    for match in re.finditer(r"\[(\d+)\]", answer):
+        try:
+            n = int(match.group(1))
+        except ValueError:
+            continue
+        if 1 <= n <= max_index:
+            used.add(n)
+    return used

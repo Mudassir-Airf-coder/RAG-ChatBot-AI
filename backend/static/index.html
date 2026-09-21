@@ -55,15 +55,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text2)}
 .empty-state h2{font-size:24px;margin-bottom:8px;color:var(--accent2)}
-.message{max-width:80%;padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.6}
+.message{max-width:80%;padding:12px 16px;border-radius:var(--radius);font-size:14px;line-height:1.6;word-wrap:break-word;overflow-wrap:anywhere}
 .user-message{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:2px}
-.assistant-message{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:2px}
+.assistant-message{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:2px;max-width:min(78%,720px)}
 .assistant-message.abstained{border:1px solid var(--orange);color:var(--orange)}
-.citations{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
-.citation{background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:600}
-.citation:hover{opacity:.8}
+.citations{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.citation{background:rgba(108,92,231,.15);color:var(--accent2);border:1px solid rgba(108,92,231,.3);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600;transition:background .15s}
+.citation:hover{background:rgba(108,92,231,.3)}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--text2);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+.rewrite-hint{align-self:flex-start;font-size:11px;color:var(--text2);font-style:italic;padding:4px 8px;margin-top:-8px}
 
 .input-area{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end}
 .input-area textarea{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-size:14px;resize:none;max-height:120px;font-family:inherit}
@@ -272,6 +274,10 @@ function escapeHtml(text) {
   return d.innerHTML;
 }
 
+function escapeAttr(text) {
+  return text.replace(/"/g, '"').replace(/'/g, ''');
+}
+
 function extractError(obj, fallback) {
   if (!obj) return fallback;
   if (obj.error && typeof obj.error.message === 'string') return obj.error.message;
@@ -313,21 +319,34 @@ function renderUserMessage(text) {
 function renderAssistantMessage(answer, citations, abstained) {
   const d = document.createElement('div');
   d.className = 'message assistant-message' + (abstained ? ' abstained' : '');
+  d.style.width = 'fit-content';
+  d.style.maxWidth = '85%';
+
   let citationsHtml = '';
   if (citations && citations.length > 0) {
     citationsHtml = '<div class="citations">' +
-      citations.map((c, i) => '<span class="citation" data-idx="' + i + '">[' + (i+1) + ']</span>').join('') +
+      citations.map((c, i) =>
+        '<span class="citation" data-idx="' + i + '" title="' +
+        escapeAttr(c.document_name || '') + '">[' + (i + 1) + ']</span>'
+      ).join('') +
       '</div>';
   }
-  d.innerHTML = '<div class="message-content">' + escapeHtml(answer) + '</div>' + citationsHtml;
+
+  d.innerHTML =
+    '<div class="message-content">' + escapeHtml(answer) + '</div>' +
+    citationsHtml;
+
   chatMessages.appendChild(d);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
   d.querySelectorAll('.citation').forEach(el => {
     el.addEventListener('click', () => {
       const idx = parseInt(el.dataset.idx);
       const c = citations[idx];
       if (c) {
-        document.getElementById('modal-body').textContent = c.quote || c.chunk_text || 'No text available';
+        document.getElementById('modal-body').textContent =
+          (c.quote || 'No text available') +
+          (c.document_name ? '\n\n— ' + c.document_name : '');
         document.getElementById('source-modal').classList.remove('hidden');
       }
     });
@@ -395,6 +414,13 @@ async function sendMessage() {
 
     const data = await res.json();
     renderAssistantMessage(data.answer, data.citations || [], data.abstained);
+    if (data.rewritten_query) {
+      const hint = document.createElement('div');
+      hint.className = 'rewrite-hint';
+      hint.textContent = 'Rewritten: "' + data.rewritten_query + '"';
+      chatMessages.appendChild(hint);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
     loadDocuments();
   } catch (err) {
     clearTimeout(timeout);
@@ -594,7 +620,15 @@ document.getElementById('save-embedding-btn').addEventListener('click', async ()
       cfgName.value = c.name || '';
       cfgUrl.value = c.base_url || '';
       cfgKey.value = c.api_key || '';
-      updateProviderStatus(true, true);
+
+      if (c.model) {
+        cfgModel.innerHTML =
+          '<option value="' + escapeAttr(c.model) + '" selected>' +
+          escapeHtml(c.model) + '</option>';
+      }
+
+      const llmComplete = Boolean(c.name && c.base_url && c.api_key && c.model);
+      updateProviderStatus(llmComplete, true);
     } catch {
       updateProviderStatus(false, true);
     }
@@ -603,7 +637,6 @@ document.getElementById('save-embedding-btn').addEventListener('click', async ()
   }
   restoreProviderSelection();
 
-  // Load Cohere key from sessionStorage
   const savedCohere = sessionStorage.getItem('rag_cohere_key');
   if (savedCohere) {
     cfgCohereKey.value = savedCohere;
