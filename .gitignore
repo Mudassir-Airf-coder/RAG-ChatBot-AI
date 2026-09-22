@@ -1,16 +1,53 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
-.venv/
+*.pyd
 *.egg-info/
 dist/
 build/
+.venv/
+*.lock
+
+# Testing
 .pytest_cache/
+.coverage
+htmlcov/
+backend/.coverage
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Backend specific
 backend/data/
 backend/uploads/
 backend/fastembed_cache/
-backend/.coverage
 backend/debug_*.py
+
+# Root specific
 seedream-*.jpeg
-*.lock
+
+# Coverage reports
+.coverage.*
+coverage.xml
+
+# Logs
+*.log
+logs/
+
+# Type checking
+.mypy_cache/
+.pyre/
