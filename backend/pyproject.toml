@@ -17,6 +17,8 @@ dependencies = [
     "qdrant-client>=1.9",
     "numpy>=1.26",
     "pytest-cov>=7.1.0",
+    "pytesseract>=0.3.10",
+    "pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]
