@@ -3,6 +3,8 @@ from pathlib import Path
 import fitz
 from docx import Document as DocxDocument
 
+from app.exceptions import ParsingError
+
 
 def parse_file(file_path: str) -> list[dict]:
     path = Path(file_path)
@@ -22,6 +24,7 @@ def parse_file(file_path: str) -> list[dict]:
 
 def _parse_pdf(path: Path) -> list[dict]:
     doc = fitz.open(str(path))
+    page_count = doc.page_count
     pages = []
     for i, page in enumerate(doc):
         text = page.get_text()
@@ -31,6 +34,11 @@ def _parse_pdf(path: Path) -> list[dict]:
                 "metadata": {"source": path.name, "page": i + 1},
             })
     doc.close()
+    if not pages:
+        raise ParsingError(
+            f"PDF has {page_count} pages but no extractable text. "
+            "It may be scanned, encrypted, or corrupt."
+        )
     return pages
 
 
