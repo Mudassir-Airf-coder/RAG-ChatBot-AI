@@ -67,13 +67,26 @@ def _ingest_pipeline(
 
     t1 = time.perf_counter()
     all_chunks = []
+    chunk_index = 0
     for page in pages:
         chunks = chunk_text(page["text"])
         for c in chunks:
             c["metadata"] = page.get("metadata", {})
+            c["index"] = chunk_index
+            chunk_index += 1
         all_chunks.extend(chunks)
     logger.info("chunk_done", document_id=doc_id, chunk_count=len(all_chunks),
                 duration_ms=int((time.perf_counter() - t1) * 1000))
+
+    if not all_chunks:
+        update_document_status(
+            doc_id, "FAILED",
+            error_message="No text could be extracted from this document. "
+                          "It may be scanned, empty, or corrupted.",
+            sqlite_path=settings.sqlite_path,
+        )
+        logger.warning("ingestion_no_chunks", document_id=doc_id)
+        return
 
     if len(all_chunks) > MAX_CHUNKS_PER_DOC:
         logger.warning("ingestion_rejected_too_many_chunks",
