@@ -7,6 +7,7 @@ contains the prompt and the fallback logic.
 import re
 
 from app.llm.base import LLMProvider
+from app.rag.intent import Intent, classify_intent
 
 
 REWRITE_PROMPT = """You rewrite user questions into search queries for a document retrieval system.
@@ -17,6 +18,8 @@ Rules:
 3. Keep the rewrite under 25 words.
 4. Do NOT add information not implied by the question.
 5. Return ONLY the rewritten question, no explanation, no quotes.
+6. Fix obvious typos (e.g. "thsis" -> "this", "wirte" -> "write").
+7. Preserve the user's intent exactly. If they ask for a summary, keep it as a summary request. If they ask for verbatim text, do not rewrite into a question.
 
 Examples:
 - "hi" -> "What is this document about?"
@@ -24,12 +27,15 @@ Examples:
 - "?" -> "What is the content of this document?"
 - "What was the revenue growth in 2025?" -> "What was the revenue growth in 2025?"
 - "compare them" -> "What are the differences between the compared items?"
+- "thsis" -> "this"
+- "act as teacher and teach me about this" -> "act as teacher and teach me about this"
+- "write this docs as is in text" -> "write this docs as is in text"
 
 Question: {question}
 Rewrite:"""
 
 
-async def rewrite_query(question: str, provider: LLMProvider, model: str) -> str:
+async def rewrite_query(question: str, provider: LLMProvider, model: str, intent=None) -> str:
     """Rewrite a query for better retrieval.
 
     Falls back to the original question on any error.
@@ -37,12 +43,7 @@ async def rewrite_query(question: str, provider: LLMProvider, model: str) -> str
     if not question or not question.strip():
         return "What is this document about?"
 
-    # Skip rewriting for specific, detailed questions
-    word_count = len(question.split())
-    if word_count >= 5 and any(
-        kw in question.lower()
-        for kw in ("what", "how", "why", "when", "where", "which", "who", "explain")
-    ):
+    if intent and not intent.rewrite_needed:
         return question
 
     try:

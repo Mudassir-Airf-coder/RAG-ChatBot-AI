@@ -2,7 +2,8 @@ from app.exceptions import ValidationError
 from app.llm.base import LLMProvider
 
 
-SYSTEM_PROMPT = """You are a helpful assistant that answers questions using only the provided document excerpts.
+PROMPTS = {
+    "knowledge": """You are a helpful assistant that answers questions using the provided document excerpts.
 
 Rules:
 1. If the excerpts contain information relevant to the question, use it. Extract specific facts, names, numbers, and quotes.
@@ -13,16 +14,56 @@ Rules:
 6. Do not use bullet points or lists unless the user asks for them.
 7. If excerpts conflict, mention the conflict in one sentence.
 8. Reply in the same language as the question (Hindi in -> Hindi out, English in -> English out).
-9. If you cite, cite only the excerpts you actually used. Do not cite every excerpt."""
+9. If you cite, cite only the excerpts you actually used. Do not cite every excerpt.""",
+
+    "summarize": """You are a helpful assistant that summarizes documents.
+
+Rules:
+1. Provide a clear overview in 3-6 sentences or bullet points.
+2. Organize logically (main topic -> key points -> details).
+3. Cite as [1] [2] when using specific excerpts.
+4. Reply in the same language as the question.""",
+
+    "verbatim": """You are a strict text extractor.
+
+Rules:
+1. Output the excerpt text VERBATIM. Do not summarize, paraphrase, or shorten.
+2. Preserve formatting, headings, line breaks, and exact wording.
+3. If multiple excerpts are provided, output them in order, separated by a line of "---".
+4. Do NOT add commentary, intro, or outro. Only the raw text.
+5. Do NOT cite or add [1] [2] markers.""",
+
+    "teach": """You are a patient teacher explaining a topic to a beginner.
+
+Rules:
+1. Explain in simple, clear language. Avoid jargon.
+2. Use a step-by-step structure: what it is -> why it matters -> how it works -> example.
+3. Use short sentences and everyday examples.
+4. Cite source excerpts as [1] [2] at the end of relevant paragraphs.
+5. Reply in the same language as the question.""",
+
+    "compare": """You are a helpful assistant that compares items.
+
+Rules:
+1. Structure the answer as: similarities -> differences -> recommendation (if asked).
+2. Use concise sentences. Bullet points are OK.
+3. Cite sources as [1] [2].
+4. Reply in the same language as the question.""",
+}
 
 
-def _format_context(chunks: list[dict]) -> str:
+def _get_system_prompt(intent_category: str) -> str:
+    return PROMPTS.get(intent_category, PROMPTS["knowledge"])
+
+
+def _format_context(chunks: list[dict], intent_category: str = "knowledge") -> str:
     """Format chunks as numbered excerpts for the LLM."""
     parts = []
     for i, chunk in enumerate(chunks, start=1):
         text = chunk.get("chunk_text", "").strip()
         if not text:
             continue
+        # For verbatim mode, don't truncate
         parts.append(f"[{i}] {text}")
     return "\n\n".join(parts)
 
@@ -32,6 +73,7 @@ async def generate_answer(
     question: str,
     provider: LLMProvider,
     model: str,
+    intent_category: str = "knowledge",
     max_tokens: int = 500,
     temperature: float = 0.1,
 ) -> dict:
@@ -45,9 +87,10 @@ async def generate_answer(
     if not context_chunks:
         raise ValidationError("No document context available for answering")
 
-    context_text = _format_context(context_chunks)
+    context_text = _format_context(context_chunks, intent_category)
+    system_prompt = _get_system_prompt(intent_category)
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
             "content": f"Excerpts:\n{context_text}\n\nQuestion: {question}",

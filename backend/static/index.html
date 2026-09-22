@@ -85,6 +85,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .citations{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
 .citation{background:rgba(108,92,231,.15);color:var(--accent2);border:1px solid rgba(108,92,231,.3);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-weight:600}
 .citation:hover{background:rgba(108,92,231,.3)}
+
+.inline-cite{background:rgba(108,92,231,.2);color:var(--accent2);padding:1px 5px;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600}
+.inline-cite:hover{background:rgba(108,92,231,.4)}
 .rewrite-hint{align-self:flex-start;font-size:11px;color:var(--text2);font-style:italic;padding:4px 8px;margin-top:-8px}
 
 .input-area{flex:0 0 auto;padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end;background:var(--bg);position:relative;z-index:5}
@@ -457,29 +460,52 @@ function renderAssistantMessage(msg) {
   var d = document.createElement("div");
   d.className = "message assistant-message" + (msg.abstained ? " abstained" : "") + (msg.error ? " error" : "");
   var html = '<div class="message-content">' + escapeHtml(msg.content) + '</div>';
-  if (msg.citations && msg.citations.length > 0) {
-    html += '<div class="citations">';
-    for (var i = 0; i < msg.citations.length; i++) {
-      html += '<span class="citation" data-idx="' + i + '">[' + (i + 1) + ']</span>';
-    }
-    html += '</div>';
-  }
   d.innerHTML = html;
   chatMessages.appendChild(d);
-  var citations = msg.citations || [];
-  var pills = d.querySelectorAll(".citation");
-  for (var k = 0; k < pills.length; k++) {
-    (function(el, idx) {
-      el.addEventListener("click", function() {
-        var c = citations[idx];
-        if (c) {
-          $("modal-body").textContent = (c.quote || "No text") + (c.document_name ? "\n\n\u2014 " + c.document_name : "");
-          $("source-modal").classList.remove("hidden");
-        }
-      });
-    })(pills[k], parseInt(pills[k].dataset.idx));
-  }
+
+  // Make inline [N] citations clickable
+  makeCitationsClickable(d.querySelector(".message-content"), msg.citations || []);
+
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function makeCitationsClickable(el, citations) {
+  if (!el || !citations || !citations.length) return;
+  var html = el.innerHTML;
+  var pattern = /\[(\d+)\]/g;
+  var match;
+  var replacements = [];
+
+  while ((match = pattern.exec(html)) !== null) {
+    replacements.push({ idx: parseInt(match[1]), full: match[0] });
+  }
+
+  for (var i = replacements.length - 1; i >= 0; i--) {
+    var r = replacements[i];
+    var citation = citations[r.idx - 1];
+    if (!citation) continue;
+    var replacement = '<span class="inline-cite" data-idx="' + (r.idx - 1) + '">' + r.full + '</span>';
+    var start = r.full.length;
+    // Find the position of this specific match
+    var pos = html.indexOf(r.full);
+    if (pos >= 0) {
+      html = html.slice(0, pos) + replacement + html.slice(pos + r.full.length);
+    }
+  }
+
+  el.innerHTML = html;
+
+  el.querySelectorAll(".inline-cite").forEach(function(span) {
+    span.addEventListener("click", function() {
+      var idx = parseInt(span.dataset.idx);
+      var c = citations[idx];
+      if (c) {
+        document.getElementById("modal-body").textContent =
+          (c.quote || "No text") + (c.document_name ? "\n\n\u2014 " + c.document_name : "");
+        document.getElementById("source-modal").classList.remove("hidden");
+      }
+    });
+  });
 }
 
 function renderMessages() {

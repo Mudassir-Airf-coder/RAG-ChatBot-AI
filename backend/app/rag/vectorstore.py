@@ -12,6 +12,7 @@ from qdrant_client.models import (
 )
 
 from app.config import settings
+from app.exceptions import VectorDBError
 
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
@@ -38,6 +39,9 @@ def upsert_chunks(
     chunks: list[dict],
     embeddings: list,
 ) -> None:
+    from app.logging import get_logger
+    logger = get_logger(__name__)
+    
     client = _get_client()
     points = []
 
@@ -58,7 +62,17 @@ def upsert_chunks(
             )
         )
 
-    client.upsert(collection_name=collection_name, points=points)
+    if not points:
+        raise VectorDBError("Cannot upsert empty points list to Qdrant")
+
+    logger.info("upsert_start", collection=collection_name, doc_id=document_id, point_count=len(points))
+    try:
+        result = client.upsert(collection_name=collection_name, points=points)
+        logger.info("upsert_done", collection=collection_name, doc_id=document_id, 
+                    status=getattr(result, 'status', 'unknown'))
+    except Exception as e:
+        logger.exception("upsert_failed", collection=collection_name, doc_id=document_id, error=str(e))
+        raise
 
 
 def delete_by_document_id(collection_name: str, document_id: str) -> None:

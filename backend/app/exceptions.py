@@ -33,3 +33,13 @@ class ProviderError(AppError):
 class StorageError(AppError):
     def __init__(self, message: str):
         super().__init__("STORAGE_ERROR", message, status_code=500)
+
+
+class ParsingError(AppError):
+    def __init__(self, message: str):
+        super().__init__("PARSING_ERROR", message, status_code=400)
+
+
+class VectorDBError(AppError):
+    def __init__(self, message: str):
+        super().__init__("VECTOR_DB_ERROR", message, status_code=500)

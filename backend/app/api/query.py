@@ -10,6 +10,7 @@ from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.rag.retriever import retrieve
 from app.rag.generator import generate_answer
 from app.rag.query_rewriter import rewrite_query
+from app.rag.intent import classify_intent, Intent
 from app.api.provider import get_session_config
 
 router = APIRouter(prefix="/api/v1", tags=["query"])
@@ -56,13 +57,14 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
     model = llm_config["model"]
     embedder = CohereEmbeddingProvider(session["cohere_api_key"])
 
-    # Step 1: rewrite query if vague
-    rewritten = await rewrite_query(request.question, provider, model)
+    # Step 1: classify intent and rewrite query if needed
+    intent = classify_intent(request.question)
+    rewritten = await rewrite_query(request.question, provider, model, intent)
 
     # Step 2: retrieve
     chunks = retrieve(
         rewritten,
-        top_k=settings.retrieval_top_k,
+        top_k=intent.max_chunks,
         collection_name=embedder.collection_name,
         embedder=embedder,
     )
@@ -82,7 +84,14 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
     # Step 4: generate
     try:
         result = await asyncio.wait_for(
-            generate_answer(chunks, request.question, provider, model),
+            generate_answer(
+                chunks,
+                request.question,
+                provider,
+                model,
+                intent_category=intent.category,
+                temperature=intent.temperature,
+            ),
             timeout=45,
         )
     except asyncio.TimeoutError:
