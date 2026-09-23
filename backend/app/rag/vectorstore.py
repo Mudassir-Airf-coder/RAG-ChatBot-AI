@@ -90,7 +90,15 @@ def upsert_chunks(
 
 
 def delete_by_document_id(collection_name: str, document_id: str) -> None:
+    from app.logging import get_logger
+
+    logger = get_logger(__name__)
+
     client = _get_client()
+
+    # Count before
+    before_count = client.count(collection_name=collection_name).count
+
     client.delete(
         collection_name=collection_name,
         points_selector=Filter(
@@ -101,4 +109,14 @@ def delete_by_document_id(collection_name: str, document_id: str) -> None:
                 )
             ]
         ),
+    )
+
+    # Count after
+    after_count = client.count(collection_name=collection_name).count
+    logger.info(
+        "delete_done",
+        collection=collection_name,
+        document_id=document_id,
+        removed=before_count - after_count,
+        remaining=after_count,
     )

@@ -673,40 +673,45 @@ function loadDocuments() {
 }
 
 function uploadFile(file) {
-  var statusEl = $("upload-status");
-  statusEl.className = "upload-status";
-  statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + " (" + formatBytes(file.size) + ")";
+  return new Promise(function(resolve) {
+    var statusEl = $("upload-status");
+    statusEl.className = "upload-status";
+    statusEl.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + " (" + formatBytes(file.size) + ")";
 
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", API + "/documents/upload");
-  xhr.timeout = 300000;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", API + "/documents/upload");
+    xhr.timeout = 300000;
 
-  xhr.onload = function() {
-    var data = null;
-    try { data = JSON.parse(xhr.responseText); } catch (e) {}
-    if (xhr.status >= 200 && xhr.status < 300) {
-      var id = data.id;
-      statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) + "...";
-      pollDocument(id, 0);
-    } else {
+    xhr.onload = function() {
+      var data = null;
+      try { data = JSON.parse(xhr.responseText); } catch (e) {}
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var id = data.id;
+        statusEl.innerHTML = '<span class="spinner"></span> Processing ' + escapeHtml(file.name) + "...";
+        pollDocument(id, 0);
+      } else {
+        statusEl.className = "upload-status error";
+        statusEl.textContent = "Upload failed: " + (data && (data.detail || data.message) || xhr.status);
+      }
+      resolve();
+    };
+
+    xhr.onerror = function() {
       statusEl.className = "upload-status error";
-      statusEl.textContent = "Upload failed: " + (data && (data.detail || data.message) || xhr.status);
-    }
-  };
+      statusEl.textContent = "Network error during upload";
+      resolve();
+    };
 
-  xhr.onerror = function() {
-    statusEl.className = "upload-status error";
-    statusEl.textContent = "Network error during upload";
-  };
+    xhr.ontimeout = function() {
+      statusEl.className = "upload-status error";
+      statusEl.textContent = "Upload timed out";
+      resolve();
+    };
 
-  xhr.ontimeout = function() {
-    statusEl.className = "upload-status error";
-    statusEl.textContent = "Upload timed out";
-  };
-
-  var fd = new FormData();
-  fd.append("file", file);
-  xhr.send(fd);
+    var fd = new FormData();
+    fd.append("file", file);
+    xhr.send(fd);
+  });
 }
 
 function pollDocument(docId, attempt) {
@@ -820,10 +825,24 @@ function wireEvents() {
   });
 
   // File upload
+  var _uploadInFlight = false;
   $("file-input").addEventListener("change", function(e) {
+    if (_uploadInFlight) {
+      return;
+    }
     var files = Array.from(e.target.files || []);
-    for (var i = 0; i < files.length; i++) uploadFile(files[i]);
+    if (files.length === 0) return;
+
+    _uploadInFlight = true;
     e.target.value = "";
+
+    var uploads = files.map(function(file) {
+      return uploadFile(file);
+    });
+
+    Promise.all(uploads).finally(function() {
+      _uploadInFlight = false;
+    });
   });
 
   // New chat
