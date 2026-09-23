@@ -18,6 +18,7 @@ backend/.coverage
 # IDE/Editor
 .vscode/
 .idea/
+.opencode/
 *.swp
 *.swo
 *~
