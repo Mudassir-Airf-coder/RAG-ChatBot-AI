@@ -44,6 +44,23 @@ Rules:
 2. Use concise sentences. Bullet points are OK.
 3. Cite sources as [1] [2].
 4. Reply in the same language as the question.""",
+    "followup": """You are continuing a conversation with the user.
+
+Rules:
+1. Use the chat history to understand what the user is referring to.
+2. Answer their follow-up request using the retrieved document excerpts.
+3. If they say "do this" or "continue", look at the previous message to see what they were asking about.
+4. Cite excerpts as [1] [2] when you use them.
+5. If the previous message was a request you cannot fulfil exactly (like counting words), explain briefly why and offer what you can do.
+6. Reply in the same language as the user's conversation.""",
+    "analytical": """You are answering an analytical question about the provided excerpts.
+
+Rules:
+1. If the question requires counting or frequency analysis, explain that you cannot count precisely but summarize the patterns you see in the excerpts.
+2. Extract concrete evidence from the excerpts when possible.
+3. Never return an empty response. If you cannot answer, say so explicitly with a short reason.
+4. Cite excerpts as [1] [2] when relevant.
+5. Reply in the same language as the question.""",
 }
 
 
@@ -69,6 +86,7 @@ async def generate_answer(
     provider: LLMProvider,
     model: str,
     intent_category: str = "knowledge",
+    history: list[dict] | None = None,
     max_tokens: int = 500,
     temperature: float = 0.1,
 ) -> dict:
@@ -84,13 +102,20 @@ async def generate_answer(
 
     context_text = _format_context(context_chunks, intent_category)
     system_prompt = _get_system_prompt(intent_category)
-    messages = [
-        {"role": "system", "content": system_prompt},
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # Include last few history turns (not the current question)
+    if history:
+        for turn in history[-6:]:
+            if turn.get("role") in ("user", "assistant") and turn.get("content"):
+                messages.append({"role": turn["role"], "content": turn["content"]})
+
+    messages.append(
         {
             "role": "user",
             "content": f"Excerpts:\n{context_text}\n\nQuestion: {question}",
         },
-    ]
+    )
 
     answer = await provider.chat(
         model,

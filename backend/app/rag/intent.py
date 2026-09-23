@@ -1,16 +1,59 @@
 from dataclasses import dataclass
 
+FOLLOWUP_PHRASES = [
+    "do this",
+    "do that",
+    "continue",
+    "go on",
+    "tell me more",
+    "elaborate",
+    "expand",
+    "more details",
+    "and then",
+    "what about",
+    "how about",
+    "the same",
+    "as above",
+    "summarize that",
+    "explain that",
+]
+
+ANALYTICAL_KEYWORDS = [
+    "count",
+    "how many",
+    "most common",
+    "most frequent",
+    "top ",
+    "frequency",
+    "list all",
+    "list every",
+    "tally",
+]
+
 
 @dataclass
 class Intent:
-    category: str  # "knowledge", "summarize", "verbatim", "teach", "compare"
+    category: str  # "knowledge", "summarize", "verbatim", "teach", "compare", "followup", "analytical"
     rewrite_needed: bool
     max_chunks: int
     temperature: float
 
 
-def classify_intent(question: str) -> Intent:
+def classify_intent(question: str, has_history: bool = False) -> Intent:
     q = question.lower().strip()
+
+    # Follow-up detection — only if there IS history
+    if has_history:
+        for phrase in FOLLOWUP_PHRASES:
+            if phrase in q:
+                return Intent("followup", rewrite_needed=False, max_chunks=10, temperature=0.1)
+        # Very short vague queries with history → also follow-up
+        if len(q.split()) <= 3:
+            return Intent("followup", rewrite_needed=False, max_chunks=10, temperature=0.1)
+
+    # Analytical queries
+    if any(kw in q for kw in ANALYTICAL_KEYWORDS):
+        return Intent("analytical", rewrite_needed=False, max_chunks=15, temperature=0.0)
 
     # Verbatim / as-is / raw extraction
     if any(

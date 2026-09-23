@@ -568,10 +568,16 @@ async function sendMessage() {
   renderLoading();
 
   try {
+    var history = state.messages.slice(-6).map(function(m) {
+      return { role: m.role, content: m.content };
+    });
+    // Do not include the just-added user message twice
+    history = history.slice(0, -1);
+
     var res = await fetch(API + "/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: text }),
+      body: JSON.stringify({ question: text, history: history }),
       credentials: "same-origin"
     });
 

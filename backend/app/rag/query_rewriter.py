@@ -31,13 +31,17 @@ Question: {question}
 Rewrite:"""
 
 
-async def rewrite_query(question: str, provider: LLMProvider, model: str, intent=None) -> str:
+async def rewrite_query(question: str, provider: LLMProvider, model: str, intent=None, history=None) -> str:
     """Rewrite a query for better retrieval.
 
     Falls back to the original question on any error.
     """
     if not question or not question.strip():
         return "What is this document about?"
+
+    # Follow-up queries should NOT be rewritten — let the LLM use history
+    if intent and intent.category == "followup":
+        return question
 
     if intent and not intent.rewrite_needed:
         return question

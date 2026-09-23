@@ -8,16 +8,25 @@ from app.config import settings
 from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.exceptions import ProviderError, ValidationError
 from app.llm import get_provider
+from app.logging import get_logger
 from app.rag.generator import generate_answer
 from app.rag.intent import classify_intent
 from app.rag.query_rewriter import rewrite_query
 from app.rag.retriever import retrieve
 
+logger = get_logger(__name__)
+
 router = APIRouter(prefix="/api/v1", tags=["query"])
+
+
+class HistoryMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
 
 
 class QueryRequest(BaseModel):
     question: str
+    history: list[HistoryMessage] = []
 
 
 class Citation(BaseModel):
@@ -55,8 +64,11 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
     model = llm_config["model"]
     embedder = CohereEmbeddingProvider(session["cohere_api_key"])
 
+    has_history = bool(request.history)
+    history_dicts = [h.model_dump() for h in request.history] if request.history else []
+
     # Step 1: classify intent and rewrite query if needed
-    intent = classify_intent(request.question)
+    intent = classify_intent(request.question, has_history=has_history)
     rewritten = await rewrite_query(request.question, provider, model, intent)
 
     # Step 2: retrieve
@@ -88,6 +100,7 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
                 provider,
                 model,
                 intent_category=intent.category,
+                history=history_dicts,
                 temperature=intent.temperature,
             ),
             timeout=45,
@@ -95,15 +108,25 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
     except TimeoutError:
         raise ProviderError("LLM request timed out after 45 seconds")
 
-    # Step 5: detect abstention
-    answer_lower = result["answer"].lower()
+    # Step 5: handle empty LLM response
+    answer = (result.get("answer") or "").strip()
+    if not answer:
+        logger.warning("empty_llm_response", question=request.question, intent=intent.category)
+        answer = (
+            "I wasn't able to generate a response for that. "
+            "Try rephrasing the question or asking something more specific."
+        )
+        result["answer"] = answer
+
+    # Step 6: detect abstention
+    answer_lower = answer.lower()
     abstained = (
         "couldn't find" in answer_lower
         or "could not find" in answer_lower
         or "not in the uploaded documents" in answer_lower
     )
 
-    # Step 6: build citations (only for chunks the LLM actually cited)
+    # Step 7: build citations (only for chunks the LLM actually cited)
     cited_indices = result.get("used_indices", [])
     citations: list[Citation] = []
     for chunk_num in cited_indices:
