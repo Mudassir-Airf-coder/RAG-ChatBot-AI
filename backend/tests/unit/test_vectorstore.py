@@ -1,9 +1,9 @@
-from unittest.mock import MagicMock, patch
 import uuid
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from app.rag.vectorstore import upsert_chunks, delete_by_document_id, _NAMESPACE
+from app.rag.vectorstore import _NAMESPACE, delete_by_document_id, upsert_chunks
 
 
 @patch("app.rag.vectorstore._get_client")

@@ -1,11 +1,11 @@
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def init_db(sqlite_path: str) -> None:
@@ -65,7 +65,14 @@ def create_document(
     )
     conn.commit()
     conn.close()
-    return {"id": document_id, "filename": filename, "status": status, "error_message": error_message, "created_at": now, "updated_at": now}
+    return {
+        "id": document_id,
+        "filename": filename,
+        "status": status,
+        "error_message": error_message,
+        "created_at": now,
+        "updated_at": now,
+    }
 
 
 def get_document(document_id: str, sqlite_path: str = ":memory:") -> dict | None:
@@ -105,7 +112,7 @@ def delete_document(document_id: str, sqlite_path: str = ":memory:") -> None:
 
 
 def mark_stale_processing_as_failed(sqlite_path: str, max_age_seconds: int = 300) -> int:
-    cutoff = datetime.now(timezone.utc).timestamp() - max_age_seconds
+    cutoff = datetime.now(UTC).timestamp() - max_age_seconds
     conn = _connect(sqlite_path)
     try:
         cur = conn.cursor()
@@ -193,14 +200,19 @@ def create_message(
     )
     conn.commit()
     conn.close()
-    return {"id": message_id, "chat_id": chat_id, "role": role, "content": content, "citations": citations or [], "created_at": now}
+    return {
+        "id": message_id,
+        "chat_id": chat_id,
+        "role": role,
+        "content": content,
+        "citations": citations or [],
+        "created_at": now,
+    }
 
 
 def get_messages_by_chat(chat_id: str, sqlite_path: str = ":memory:") -> list[dict]:
     conn = _connect(sqlite_path)
-    rows = conn.execute(
-        "SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at", (chat_id,)
-    ).fetchall()
+    rows = conn.execute("SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at", (chat_id,)).fetchall()
     conn.close()
     result = []
     for r in rows:

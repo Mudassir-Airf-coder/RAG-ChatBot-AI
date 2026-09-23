@@ -40,6 +40,7 @@ def test_parse_txt_empty():
 
 def test_parse_unsupported():
     import pytest
+
     with tempfile.NamedTemporaryFile(suffix=".xyz", delete=False) as f:
         path = f.name
 

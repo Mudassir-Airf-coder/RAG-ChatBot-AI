@@ -1,11 +1,10 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.storage import init_db, create_chat, create_message
-
-import sqlite3
+from app.storage import create_chat, create_message, init_db
 
 
 @pytest.fixture

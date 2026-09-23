@@ -1,18 +1,19 @@
 import pytest
+
 from app.storage import (
-    init_db,
-    create_document,
-    get_document,
-    list_documents,
-    update_document_status,
-    delete_document,
     create_chat,
-    list_chats,
-    get_chat,
-    update_chat_timestamp,
-    delete_chat,
+    create_document,
     create_message,
+    delete_chat,
+    delete_document,
+    get_chat,
+    get_document,
     get_messages_by_chat,
+    init_db,
+    list_chats,
+    list_documents,
+    update_chat_timestamp,
+    update_document_status,
 )
 
 
@@ -108,6 +109,7 @@ def test_get_messages_ordered(db):
 
 def test_init_db_creates_parent_directory(tmp_path):
     from app.storage import init_db
+
     db_path = tmp_path / "nested" / "deep" / "test.db"
     assert not db_path.parent.exists()
     init_db(str(db_path))
@@ -117,6 +119,7 @@ def test_init_db_creates_parent_directory(tmp_path):
 
 def test_init_db_does_not_fail_on_existing_directory(tmp_path):
     from app.storage import init_db
+
     db_path = tmp_path / "test.db"
     init_db(str(db_path))
     init_db(str(db_path))

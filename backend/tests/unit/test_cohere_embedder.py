@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pytest
 
 from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.exceptions import ProviderError, ValidationError

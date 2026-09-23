@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 
 import fitz
 from docx import Document as DocxDocument
@@ -70,10 +69,12 @@ def _parse_pdf(path: Path) -> list[dict]:
                 pass
 
         if text.strip():
-            pages.append({
-                "text": text,
-                "metadata": {"source": path.name, "page": i + 1},
-            })
+            pages.append(
+                {
+                    "text": text,
+                    "metadata": {"source": path.name, "page": i + 1},
+                }
+            )
 
     doc.close()
 
@@ -89,14 +90,11 @@ def _parse_pdf(path: Path) -> list[dict]:
                 "apt install tesseract-ocr && uv add pytesseract pillow"
             )
         except Exception as e:
-            raise ParsingError(
-                f"PDF has {page_count} pages but OCR also failed: {e}"
-            )
+            raise ParsingError(f"PDF has {page_count} pages but OCR also failed: {e}")
 
     if not pages:
         raise ParsingError(
-            f"PDF has {page_count} pages but no extractable text even "
-            "after OCR. The file may be corrupt or unreadable."
+            f"PDF has {page_count} pages but no extractable text even after OCR. The file may be corrupt or unreadable."
         )
 
     return pages
@@ -120,15 +118,19 @@ def _parse_pdf_ocr(path: Path) -> list[dict]:
         # Render page to image at 200 DPI
         pix = page.get_pixmap(dpi=200)
         img_bytes = pix.tobytes("png")
-        from PIL import Image
         import io
+
+        from PIL import Image
+
         img = Image.open(io.BytesIO(img_bytes))
         text = pytesseract.image_to_string(img)
         if text.strip():
-            pages.append({
-                "text": text,
-                "metadata": {"source": path.name, "page": i + 1, "ocr": True},
-            })
+            pages.append(
+                {
+                    "text": text,
+                    "metadata": {"source": path.name, "page": i + 1, "ocr": True},
+                }
+            )
     doc.close()
     return pages
 
@@ -180,8 +182,10 @@ def _parse_docx(path: Path) -> list[dict]:
     for para in doc.paragraphs:
         text = para.text.strip()
         if text:
-            paragraphs.append({
-                "text": text,
-                "metadata": {"source": path.name},
-            })
+            paragraphs.append(
+                {
+                    "text": text,
+                    "metadata": {"source": path.name},
+                }
+            )
     return paragraphs if paragraphs else [{"text": "", "metadata": {"source": path.name}}]

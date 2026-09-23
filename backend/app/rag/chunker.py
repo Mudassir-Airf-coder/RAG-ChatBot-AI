@@ -16,9 +16,7 @@ def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[dic
     if overlap < 0:
         raise ValidationError("overlap must be non-negative")
     if overlap >= chunk_size:
-        raise ValidationError(
-            f"overlap ({overlap}) must be < chunk_size ({chunk_size})"
-        )
+        raise ValidationError(f"overlap ({overlap}) must be < chunk_size ({chunk_size})")
 
     chunks = []
     start = 0

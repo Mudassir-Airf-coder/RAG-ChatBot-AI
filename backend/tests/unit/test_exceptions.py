@@ -1,18 +1,16 @@
 from app.exceptions import (
     AppError,
-    ValidationError,
     NotFoundError,
     ProviderError,
     StorageError,
+    ValidationError,
 )
 
 
 def test_app_error_to_dict():
     """AppError produces correct JSON shape."""
     err = AppError("CODE", "msg", 500)
-    assert err.to_dict() == {
-        "error": {"code": "CODE", "message": "msg", "details": {}}
-    }
+    assert err.to_dict() == {"error": {"code": "CODE", "message": "msg", "details": {}}}
     assert err.status_code == 500
 
 

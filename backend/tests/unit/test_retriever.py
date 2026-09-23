@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+
 import numpy as np
 
 from app.rag.retriever import retrieve

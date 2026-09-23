@@ -1,4 +1,4 @@
-from app.logging import get_logger, configure_logging
+from app.logging import configure_logging, get_logger
 
 
 def test_api_key_redacted(capsys):

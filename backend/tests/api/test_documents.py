@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -34,8 +35,10 @@ def test_upload_document(mock_embed, mock_parse, client, tmp_path):
         with patch("app.api.documents.get_session_config") as mock_session:
             mock_session.return_value = {"cohere_api_key": "sk-test-key"}
 
-            with patch("app.api.documents.create_collection"), \
-                 patch("app.api.documents.upsert_chunks"):
+            with (
+                patch("app.api.documents.create_collection"),
+                patch("app.api.documents.upsert_chunks"),
+            ):
                 resp = client.post(
                     "/api/v1/documents/upload",
                     files={"file": ("test.txt", b"hello world", "text/plain")},
@@ -87,8 +90,10 @@ def test_upload_small_file(mock_parse, mock_embed, client, tmp_path):
         with patch("app.api.documents.get_session_config") as mock_session:
             mock_session.return_value = {"cohere_api_key": "sk-test-key"}
 
-            with patch("app.api.documents.create_collection"), \
-                 patch("app.api.documents.upsert_chunks"):
+            with (
+                patch("app.api.documents.create_collection"),
+                patch("app.api.documents.upsert_chunks"),
+            ):
                 resp = client.post(
                     "/api/v1/documents/upload",
                     files={"file": ("small.txt", b"tiny content", "text/plain")},
@@ -138,8 +143,10 @@ def test_upload_streams_to_disk(mock_parse, mock_embed, client, tmp_path):
         with patch("app.api.documents.get_session_config") as mock_session:
             mock_session.return_value = {"cohere_api_key": "sk-test-key"}
 
-            with patch("app.api.documents.create_collection"), \
-                 patch("app.api.documents.upsert_chunks"):
+            with (
+                patch("app.api.documents.create_collection"),
+                patch("app.api.documents.upsert_chunks"),
+            ):
                 resp = client.post(
                     "/api/v1/documents/upload",
                     files={"file": ("stream.txt", b"content here", "text/plain")},

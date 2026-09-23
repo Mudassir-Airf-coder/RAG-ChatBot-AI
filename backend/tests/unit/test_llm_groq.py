@@ -1,8 +1,9 @@
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.llm.groq import GroqProvider
+import pytest
+
 from app.exceptions import ProviderError
+from app.llm.groq import GroqProvider
 
 
 @pytest.fixture
@@ -31,9 +32,7 @@ async def test_get_models_returns_list(provider):
 async def test_chat_returns_content(provider):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "choices": [{"message": {"content": "hello there"}}]
-    }
+    mock_resp.json.return_value = {"choices": [{"message": {"content": "hello there"}}]}
 
     with patch("app.llm.groq.httpx.AsyncClient") as mock_client:
         instance = AsyncMock()
@@ -65,6 +64,7 @@ async def test_invalid_api_key_raises():
 
 def test_non_ascii_key_raises_clean_error():
     from app.exceptions import ValidationError
+
     with pytest.raises(ValidationError, match="API key contains invalid characters"):
         GroqProvider("gsk_test_with_em_dash_\u2014")
 

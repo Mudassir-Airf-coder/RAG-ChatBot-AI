@@ -1,10 +1,10 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.api.provider import sessions
-from app.llm.base import LLMProvider
+from app.main import app
 
 
 @pytest.fixture
@@ -66,14 +66,26 @@ def test_query_no_documents_returns_abstained(mock_rewrite, mock_retrieve, mock_
 @patch("app.api.query.CohereEmbeddingProvider")
 def test_query_with_documents_returns_answer(mock_embedder_class, mock_rewrite, mock_retrieve, mock_generate, client):
     mock_retrieve.return_value = [
-        {"chunk_id": "c1", "document_id": "d1", "chunk_index": 0,
-         "chunk_text": "Context text", "metadata": {"filename": "test.md"}, "score": 0.9}
+        {
+            "chunk_id": "c1",
+            "document_id": "d1",
+            "chunk_index": 0,
+            "chunk_text": "Context text",
+            "metadata": {"filename": "test.md"},
+            "score": 0.9,
+        }
     ]
     mock_rewrite.return_value = "What is the answer?"
     mock_generate.return_value = {
         "answer": "The answer is 42 [1].",
-        "citations": [{"citation_index": 1, "excerpt_index": 1,
-                       "document_id": "d1", "chunk_id": "c1"}],
+        "citations": [
+            {
+                "citation_index": 1,
+                "excerpt_index": 1,
+                "document_id": "d1",
+                "chunk_id": "c1",
+            }
+        ],
         "used_indices": [1],
     }
     mock_embedder = MagicMock()

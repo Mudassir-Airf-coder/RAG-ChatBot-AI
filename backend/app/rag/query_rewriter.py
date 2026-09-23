@@ -4,11 +4,7 @@ The LLM (Groq/OpenCode) does the actual rewriting. This module
 contains the prompt and the fallback logic.
 """
 
-import re
-
 from app.llm.base import LLMProvider
-from app.rag.intent import Intent, classify_intent
-
 
 REWRITE_PROMPT = """You rewrite user questions into search queries for a document retrieval system.
 
@@ -69,7 +65,7 @@ def _clean_rewrite(raw: str) -> str:
     # Remove common prefixes
     for prefix in ("Rewrite:", "Rewritten:", "Answer:", "Question:"):
         if text.startswith(prefix):
-            text = text[len(prefix):].strip()
+            text = text[len(prefix) :].strip()
     # Remove wrapping quotes
     if len(text) >= 2 and text[0] == text[-1] and text[0] in "\"'":
         text = text[1:-1].strip()

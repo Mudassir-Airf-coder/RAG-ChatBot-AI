@@ -1,7 +1,6 @@
 from app.exceptions import ValidationError
 from app.llm.base import LLMProvider
 
-
 PROMPTS = {
     "knowledge": """You are a helpful assistant that answers questions using the provided document excerpts.
 
@@ -15,7 +14,6 @@ Rules:
 7. If excerpts conflict, mention the conflict in one sentence.
 8. Reply in the same language as the question (Hindi in -> Hindi out, English in -> English out).
 9. If you cite, cite only the excerpts you actually used. Do not cite every excerpt.""",
-
     "summarize": """You are a helpful assistant that summarizes documents.
 
 Rules:
@@ -23,7 +21,6 @@ Rules:
 2. Organize logically (main topic -> key points -> details).
 3. Cite as [1] [2] when using specific excerpts.
 4. Reply in the same language as the question.""",
-
     "verbatim": """You are a strict text extractor.
 
 Rules:
@@ -32,7 +29,6 @@ Rules:
 3. If multiple excerpts are provided, output them in order, separated by a line of "---".
 4. Do NOT add commentary, intro, or outro. Only the raw text.
 5. Do NOT cite or add [1] [2] markers.""",
-
     "teach": """You are a patient teacher explaining a topic to a beginner.
 
 Rules:
@@ -41,7 +37,6 @@ Rules:
 3. Use short sentences and everyday examples.
 4. Cite source excerpts as [1] [2] at the end of relevant paragraphs.
 5. Reply in the same language as the question.""",
-
     "compare": """You are a helpful assistant that compares items.
 
 Rules:
@@ -129,6 +124,7 @@ async def generate_answer(
 def _extract_used_indices(answer: str, max_index: int) -> set[int]:
     """Parse [N] references from the answer text."""
     import re
+
     used: set[int] = set()
     for match in re.finditer(r"\[(\d+)\]", answer):
         try:

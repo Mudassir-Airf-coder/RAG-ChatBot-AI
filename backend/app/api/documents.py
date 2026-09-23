@@ -1,28 +1,29 @@
-import asyncio
 import shutil
 import threading
 import time
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Request
+from fastapi import APIRouter, BackgroundTasks, File, Request, UploadFile
 from pydantic import BaseModel
 
+from app.api.provider import get_session_config
 from app.config import settings
+from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.exceptions import NotFoundError, ValidationError
 from app.logging import get_logger
-from app.embeddings.cohere_cloud import CohereEmbeddingProvider
-from app.rag.parser import parse_file
 from app.rag.chunker import chunk_text
-from app.rag.vectorstore import create_collection, upsert_chunks, delete_by_document_id
+from app.rag.parser import parse_file
+from app.rag.vectorstore import create_collection, delete_by_document_id, upsert_chunks
 from app.storage import (
     create_document,
-    delete_document as storage_delete_document,
     get_document,
     list_documents,
     update_document_status,
 )
-from app.api.provider import get_session_config
+from app.storage import (
+    delete_document as storage_delete_document,
+)
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 logger = get_logger(__name__)
@@ -62,8 +63,12 @@ def _ingest_pipeline(
     t0 = time.perf_counter()
     logger.info("parse_started", document_id=doc_id)
     pages = parse_file(dest)
-    logger.info("parse_done", document_id=doc_id, pages=len(pages),
-                duration_ms=int((time.perf_counter() - t0) * 1000))
+    logger.info(
+        "parse_done",
+        document_id=doc_id,
+        pages=len(pages),
+        duration_ms=int((time.perf_counter() - t0) * 1000),
+    )
 
     t1 = time.perf_counter()
     all_chunks = []
@@ -75,33 +80,40 @@ def _ingest_pipeline(
             c["index"] = chunk_index
             chunk_index += 1
         all_chunks.extend(chunks)
-    logger.info("chunk_done", document_id=doc_id, chunk_count=len(all_chunks),
-                duration_ms=int((time.perf_counter() - t1) * 1000))
+    logger.info(
+        "chunk_done",
+        document_id=doc_id,
+        chunk_count=len(all_chunks),
+        duration_ms=int((time.perf_counter() - t1) * 1000),
+    )
 
     if not all_chunks:
         update_document_status(
-            doc_id, "FAILED",
-            error_message="No text could be extracted from this document. "
-                          "It may be scanned, empty, or corrupted.",
+            doc_id,
+            "FAILED",
+            error_message="No text could be extracted from this document. It may be scanned, empty, or corrupted.",
             sqlite_path=settings.sqlite_path,
         )
         logger.warning("ingestion_no_chunks", document_id=doc_id)
         return
 
     if len(all_chunks) > MAX_CHUNKS_PER_DOC:
-        logger.warning("ingestion_rejected_too_many_chunks",
-                       document_id=doc_id, chunk_count=len(all_chunks),
-                       limit=settings.max_chunks_per_doc)
+        logger.warning(
+            "ingestion_rejected_too_many_chunks",
+            document_id=doc_id,
+            chunk_count=len(all_chunks),
+            limit=settings.max_chunks_per_doc,
+        )
         update_document_status(
-            doc_id, "FAILED",
+            doc_id,
+            "FAILED",
             error_message=f"Document produces {len(all_chunks)} chunks, "
-                          f"exceeds limit of {settings.max_chunks_per_doc}. "
-                          f"Split the file or increase max_chunks_per_doc.",
+            f"exceeds limit of {settings.max_chunks_per_doc}. "
+            f"Split the file or increase max_chunks_per_doc.",
             sqlite_path=settings.sqlite_path,
         )
         raise ValidationError(
-            f"Document too large: {len(all_chunks)} chunks exceeds limit "
-            f"of {settings.max_chunks_per_doc}"
+            f"Document too large: {len(all_chunks)} chunks exceeds limit of {settings.max_chunks_per_doc}"
         )
 
     t2 = time.perf_counter()
@@ -115,26 +127,34 @@ def _ingest_pipeline(
         if get_document(doc_id, settings.sqlite_path) is None:
             logger.info("ingestion_cancelled_doc_deleted", document_id=doc_id)
             return
-        batch_texts = texts[i:i+batch]
+        batch_texts = texts[i : i + batch]
         batch_embeddings = embedder.embed_chunks(batch_texts)
         embeddings.extend(batch_embeddings)
-        logger.info("embed_progress", document_id=doc_id,
-                    done=min(i+batch, len(texts)),
-                    total=len(texts))
-    logger.info("embed_done", document_id=doc_id,
-                duration_ms=int((time.perf_counter() - t2) * 1000))
+        logger.info(
+            "embed_progress",
+            document_id=doc_id,
+            done=min(i + batch, len(texts)),
+            total=len(texts),
+        )
+    logger.info(
+        "embed_done",
+        document_id=doc_id,
+        duration_ms=int((time.perf_counter() - t2) * 1000),
+    )
 
     t3 = time.perf_counter()
     create_collection(embedder.dimension, collection_name)
     upsert_chunks(collection_name, doc_id, all_chunks, embeddings)
-    logger.info("index_done", document_id=doc_id,
-                duration_ms=int((time.perf_counter() - t3) * 1000))
+    logger.info(
+        "index_done",
+        document_id=doc_id,
+        duration_ms=int((time.perf_counter() - t3) * 1000),
+    )
 
     update_document_status(doc_id, "READY", sqlite_path=settings.sqlite_path)
 
 
-def run_ingestion(doc_id: str, dest: str, safe_name: str, settings_obj,
-                  embedder, collection_name: str) -> None:
+def run_ingestion(doc_id: str, dest: str, safe_name: str, settings_obj, embedder, collection_name: str) -> None:
     """Background task wrapper that runs ingestion with semaphore."""
     try:
         with _ingest_semaphore:
@@ -142,8 +162,7 @@ def run_ingestion(doc_id: str, dest: str, safe_name: str, settings_obj,
             _ingest_pipeline(doc_id, dest, safe_name, embedder, collection_name)
     except Exception as e:
         logger.exception("ingestion_failed", document_id=doc_id, filename=safe_name)
-        update_document_status(doc_id, "FAILED", error_message=str(e),
-                               sqlite_path=settings_obj.sqlite_path)
+        update_document_status(doc_id, "FAILED", error_message=str(e), sqlite_path=settings_obj.sqlite_path)
         raise
 
 
@@ -193,13 +212,30 @@ async def upload_document(
 
     # Queue background ingestion
     if background is not None:
-        background.add_task(run_ingestion, doc_id, str(dest), safe_name, settings,
-                            embedder, collection_name)
+        background.add_task(
+            run_ingestion,
+            doc_id,
+            str(dest),
+            safe_name,
+            settings,
+            embedder,
+            collection_name,
+        )
     else:
         # Fallback for testing without BackgroundTasks
         import asyncio
-        asyncio.create_task(asyncio.to_thread(run_ingestion, doc_id, str(dest), safe_name, settings,
-                                              embedder, collection_name))
+
+        asyncio.create_task(
+            asyncio.to_thread(
+                run_ingestion,
+                doc_id,
+                str(dest),
+                safe_name,
+                settings,
+                embedder,
+                collection_name,
+            )
+        )
 
     logger.info("upload_queued", document_id=doc_id, filename=safe_name)
 
@@ -243,6 +279,7 @@ async def delete_doc(id: str, req: Request) -> None:
 @router.get("/{id}/chunks/{chunk_id}", response_model=ChunkResponse)
 async def get_chunk(id: str, chunk_id: str) -> ChunkResponse:
     from qdrant_client import QdrantClient
+
     client = QdrantClient(url=settings.qdrant_url)
     result = client.retrieve(collection_name="rag_chatbot_cohere", ids=[chunk_id], with_payload=True)
     if not result:

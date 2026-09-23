@@ -3,15 +3,15 @@ import asyncio
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from app.config import settings
-from app.exceptions import ValidationError, ProviderError
-from app.llm import get_provider
-from app.embeddings.cohere_cloud import CohereEmbeddingProvider
-from app.rag.retriever import retrieve
-from app.rag.generator import generate_answer
-from app.rag.query_rewriter import rewrite_query
-from app.rag.intent import classify_intent, Intent
 from app.api.provider import get_session_config
+from app.config import settings
+from app.embeddings.cohere_cloud import CohereEmbeddingProvider
+from app.exceptions import ProviderError, ValidationError
+from app.llm import get_provider
+from app.rag.generator import generate_answer
+from app.rag.intent import classify_intent
+from app.rag.query_rewriter import rewrite_query
+from app.rag.retriever import retrieve
 
 router = APIRouter(prefix="/api/v1", tags=["query"])
 
@@ -41,9 +41,7 @@ class QueryResponse(BaseModel):
 async def query(request: QueryRequest, req: Request) -> QueryResponse:
     session = get_session_config(req)
     if not session or not session.get("cohere_api_key"):
-        raise ValidationError(
-            "Configure Cohere API key first in the Embedding Provider section"
-        )
+        raise ValidationError("Configure Cohere API key first in the Embedding Provider section")
 
     llm_config = {
         "base_url": session.get("base_url"),
@@ -94,7 +92,7 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
             ),
             timeout=45,
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise ProviderError("LLM request timed out after 45 seconds")
 
     # Step 5: detect abstention
@@ -116,8 +114,7 @@ async def query(request: QueryRequest, req: Request) -> QueryResponse:
                 citation_index=len(citations) + 1,
                 document_id=chunk.get("document_id", ""),
                 chunk_id=chunk.get("chunk_id", ""),
-                document_name=metadata.get("filename")
-                or metadata.get("source", ""),
+                document_name=metadata.get("filename") or metadata.get("source", ""),
                 page=metadata.get("page"),
                 quote=(chunk.get("chunk_text") or "")[:200],
             )

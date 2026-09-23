@@ -3,12 +3,12 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel
 
+from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 from app.exceptions import ValidationError
 from app.llm import get_provider
-from app.embeddings.cohere_cloud import CohereEmbeddingProvider
 
 router = APIRouter(prefix="/api/v1/provider", tags=["provider"])
 
@@ -107,14 +107,11 @@ async def save_config(request: ConfigRequest, response: Response, req: Request) 
     }
 
     # At least one config must be complete
-    llm_configured = all([merged["name"], merged["base_url"],
-                          merged["api_key"], merged["model"]])
+    llm_configured = all([merged["name"], merged["base_url"], merged["api_key"], merged["model"]])
     cohere_configured = bool(merged["cohere_api_key"])
 
     if not llm_configured and not cohere_configured:
-        raise ValidationError(
-            "Nothing to save. Provide LLM fields or Cohere key."
-        )
+        raise ValidationError("Nothing to save. Provide LLM fields or Cohere key.")
 
     sessions[session_id] = merged
     _save_sessions(sessions)

@@ -1,6 +1,5 @@
 import uuid
 
-from numpy import ndarray
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -40,8 +39,9 @@ def upsert_chunks(
     embeddings: list,
 ) -> None:
     from app.logging import get_logger
+
     logger = get_logger(__name__)
-    
+
     client = _get_client()
     points = []
 
@@ -65,13 +65,27 @@ def upsert_chunks(
     if not points:
         raise VectorDBError("Cannot upsert empty points list to Qdrant")
 
-    logger.info("upsert_start", collection=collection_name, doc_id=document_id, point_count=len(points))
+    logger.info(
+        "upsert_start",
+        collection=collection_name,
+        doc_id=document_id,
+        point_count=len(points),
+    )
     try:
         result = client.upsert(collection_name=collection_name, points=points)
-        logger.info("upsert_done", collection=collection_name, doc_id=document_id, 
-                    status=getattr(result, 'status', 'unknown'))
+        logger.info(
+            "upsert_done",
+            collection=collection_name,
+            doc_id=document_id,
+            status=getattr(result, "status", "unknown"),
+        )
     except Exception as e:
-        logger.exception("upsert_failed", collection=collection_name, doc_id=document_id, error=str(e))
+        logger.exception(
+            "upsert_failed",
+            collection=collection_name,
+            doc_id=document_id,
+            error=str(e),
+        )
         raise
 
 

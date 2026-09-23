@@ -1,4 +1,5 @@
 import logging
+
 import structlog
 
 SENSITIVE_KEYS = {"api_key", "authorization", "token", "secret", "password", "bearer"}

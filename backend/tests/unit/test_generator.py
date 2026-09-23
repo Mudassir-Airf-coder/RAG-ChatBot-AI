@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from app.rag.generator import generate_answer
+import pytest
+
 from app.exceptions import ValidationError
+from app.rag.generator import generate_answer
 
 
 @pytest.mark.asyncio
@@ -11,8 +12,18 @@ async def test_generates_answer_from_context():
     provider.chat.return_value = "The answer is 42 [1]."
 
     chunks = [
-        {"chunk_id": "c1", "document_id": "d1", "chunk_index": 0, "chunk_text": "context one"},
-        {"chunk_id": "c2", "document_id": "d1", "chunk_index": 1, "chunk_text": "context two"},
+        {
+            "chunk_id": "c1",
+            "document_id": "d1",
+            "chunk_index": 0,
+            "chunk_text": "context one",
+        },
+        {
+            "chunk_id": "c2",
+            "document_id": "d1",
+            "chunk_index": 1,
+            "chunk_text": "context two",
+        },
     ]
 
     result = await generate_answer(chunks, "What is the answer?", provider, "test-model")

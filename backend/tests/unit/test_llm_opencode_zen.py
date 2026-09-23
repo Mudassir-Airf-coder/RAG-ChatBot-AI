@@ -1,8 +1,9 @@
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from app.exceptions import ValidationError
 from app.llm.opencode_zen import OpenCodeZenProvider
-from app.exceptions import ProviderError, ValidationError
 
 
 @pytest.fixture
@@ -31,9 +32,7 @@ async def test_get_models_returns_list(provider):
 async def test_chat_returns_content(provider):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "choices": [{"message": {"content": "hello there"}}]
-    }
+    mock_resp.json.return_value = {"choices": [{"message": {"content": "hello there"}}]}
 
     with patch("app.llm.opencode_zen.httpx.AsyncClient") as mock_client:
         instance = AsyncMock()

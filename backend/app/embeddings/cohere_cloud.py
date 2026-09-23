@@ -32,7 +32,7 @@ class CohereEmbeddingProvider(EmbeddingProvider):
     def _embed(self, texts: list[str], input_type: str) -> list[ndarray]:
         out: list[ndarray] = []
         for i in range(0, len(texts), self.MAX_BATCH):
-            batch = texts[i:i + self.MAX_BATCH]
+            batch = texts[i : i + self.MAX_BATCH]
             resp = httpx.post(
                 self.API_URL,
                 headers={
@@ -52,9 +52,7 @@ class CohereEmbeddingProvider(EmbeddingProvider):
             if resp.status_code == 429:
                 raise ProviderError("Cohere rate limit exceeded")
             if resp.status_code != 200:
-                raise ProviderError(
-                    f"Cohere returned {resp.status_code}: {resp.text[:200]}"
-                )
+                raise ProviderError(f"Cohere returned {resp.status_code}: {resp.text[:200]}")
             data = resp.json()
             out.extend(np.array(v, dtype="float32") for v in data["embeddings"])
         return out
