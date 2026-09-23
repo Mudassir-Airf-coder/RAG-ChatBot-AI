@@ -28,8 +28,16 @@ Upload documents → ask questions → get answers with citations from your docs
 ## Quick start
 
 ```bash
-git clone <repo>
-cd rag-chatbot
+# Clone the repository
+git clone https://github.com/Mudassir-Airf-coder/RAG-ChatBot-AI.git
+cd RAG-ChatBot-AI
+
+# Install backend dependencies
+cd backend
+uv sync
+cd ..
+
+# Start everything (Qdrant + FastAPI + open browser)
 ./run.sh
 ```
 
@@ -151,7 +159,7 @@ See `backend/.env.example` for template.
 ## Project Structure
 
 ```
-rag-chatbot/
+RAG-ChatBot-AI/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml              # GitHub Actions CI
